@@ -217,7 +217,35 @@ internal sealed class SuggestionService : BackgroundService
 
         if (!_discordClient.Guilds.TryGetValue(suggestion.GuildId, out DiscordGuild? guild)) return;
         if (!_configurationService.TryGetGuildConfiguration(guild, out GuildConfiguration? configuration)) return;
-        DiscordUser author = await _discordClient.GetUserAsync(suggestion.AuthorId);
+        
+        DiscordChannel? channel = guild.GetChannel(configuration.SuggestionChannel);
+        if (channel is null) return;
+
+        DiscordMessage? message = await channel.GetMessageAsync(suggestion.MessageId).ConfigureAwait(false);
+        if (message is null) return;
+
+        DiscordEmbed embed = await GetSuggestionEmbedAsync(suggestion).ConfigureAwait(false);
+        await message.ModifyAsync(m => m.Embed = embed).ConfigureAwait(false);
+
+        if (suggestion.Status != SuggestionStatus.Suggested)
+        {
+            await message.DeleteAllReactionsAsync().ConfigureAwait(false);
+        }
+    }
+
+    public async Task<DiscordEmbed> GetSuggestionEmbedAsync(Suggestion suggestion)
+    {
+        if (!_discordClient.Guilds.TryGetValue(suggestion.GuildId, out DiscordGuild? guild))
+        {
+            return new DiscordEmbedBuilder();
+        }
+
+        if (!_configurationService.TryGetGuildConfiguration(guild, out GuildConfiguration? configuration))
+        {
+            configuration = new GuildConfiguration();
+        }
+
+        DiscordUser author = await _discordClient.GetUserAsync(suggestion.AuthorId).ConfigureAwait(false);
 
         var embed = new DiscordEmbedBuilder();
         string authorName = author.GetUsernameWithDiscriminator();
@@ -243,19 +271,7 @@ internal sealed class SuggestionService : BackgroundService
         };
 
         embed.AddField("Status", $"{emoji} **{suggestion.Status.Humanize(LetterCasing.AllCaps)}**", true);
-
-        DiscordChannel? channel = guild.GetChannel(configuration.SuggestionChannel);
-        if (channel is null) return;
-
-        DiscordMessage? message = await channel.GetMessageAsync(suggestion.MessageId).ConfigureAwait(false);
-        if (message is null) return;
-
-        await message.ModifyAsync(m => m.Embed = embed).ConfigureAwait(false);
-
-        if (suggestion.Status != SuggestionStatus.Suggested)
-        {
-            await message.DeleteAllReactionsAsync().ConfigureAwait(false);
-        }
+        return embed;
     }
 
     /// <summary>
@@ -296,7 +312,7 @@ internal sealed class SuggestionService : BackgroundService
         using SuggestionContext context = _contextFactory.CreateDbContext();
         context.Suggestions.Update(suggestion);
         context.SaveChanges();
-        
+
         var embed = new DiscordEmbedBuilder();
         embed.WithColor(DiscordColor.CornflowerBlue);
         embed.WithTitle("Suggestion Updated");
@@ -341,7 +357,7 @@ internal sealed class SuggestionService : BackgroundService
         {
             _logger.LogWarning("{Guild} is not configured!", guild);
         }
-        
+
         return Task.CompletedTask;
     }
 
