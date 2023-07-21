@@ -441,6 +441,8 @@ internal sealed class SuggestionService : BackgroundService
         using SuggestionContext context = _contextFactory.CreateDbContext();
         context.Suggestions.Update(suggestion);
         context.SaveChanges();
+
+        _ = UpdateSuggestionAsync(suggestion);
         return true;
     }
 
