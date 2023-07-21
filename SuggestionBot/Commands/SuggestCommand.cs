@@ -1,9 +1,8 @@
-﻿using DSharpPlus;
+using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.SlashCommands;
 using DSharpPlus.SlashCommands.Attributes;
 using Humanizer;
-using SuggestionBot.Configuration;
 using SuggestionBot.Data;
 using SuggestionBot.Interactivity;
 using SuggestionBot.Services;
@@ -12,20 +11,21 @@ namespace SuggestionBot.Commands;
 
 internal sealed class SuggestCommand : ApplicationCommandModule
 {
-    private readonly ConfigurationService _configurationService;
+    private readonly CooldownService _cooldownService;
     private readonly SuggestionService _suggestionService;
     private readonly UserBlockingService _userBlockingService;
 
     /// <summary>
     ///     Initializes a new instance of the <see cref="SuggestCommand" /> class.
     /// </summary>
-    /// <param name="configurationService">The <see cref="ConfigurationService" />.</param>
+    /// <param name="cooldownService">The <see cref="CooldownService" />.</param>
     /// <param name="suggestionService">The <see cref="SuggestionService" />.</param>
     /// <param name="userBlockingService">The <see cref="UserBlockingService" />.</param>
-    public SuggestCommand(ConfigurationService configurationService, SuggestionService suggestionService,
+    public SuggestCommand(CooldownService cooldownService,
+        SuggestionService suggestionService,
         UserBlockingService userBlockingService)
     {
-        _configurationService = configurationService;
+        _cooldownService = cooldownService;
         _suggestionService = suggestionService;
         _userBlockingService = userBlockingService;
     }
@@ -44,13 +44,12 @@ internal sealed class SuggestCommand : ApplicationCommandModule
             return;
         }
 
-        if (ValidateCooldown(context, out DateTimeOffset expiration))
+        TimeSpan cooldown = _cooldownService.GetRemainingCooldown(context.Member);
+        if (cooldown > TimeSpan.Zero)
         {
-            TimeSpan remaining = expiration - DateTimeOffset.UtcNow;
-
             var builder = new DiscordInteractionResponseBuilder();
             builder.AsEphemeral();
-            builder.WithContent($"You are on cooldown. You can suggest again in {remaining.Humanize()}.");
+            builder.WithContent($"You are on cooldown. You can suggest again in {cooldown.Humanize()}.");
             await context.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, builder)
                 .ConfigureAwait(false);
             return;
@@ -88,30 +87,5 @@ internal sealed class SuggestCommand : ApplicationCommandModule
         followUp.WithContent($"Your suggestion has been created and can be viewed here: {message.JumpLink}");
         followUp.AsEphemeral();
         await context.FollowUpAsync(followUp).ConfigureAwait(false);
-    }
-
-    private bool ValidateCooldown(InteractionContext context, out DateTimeOffset expiration)
-    {
-        if (!_configurationService.TryGetGuildConfiguration(context.Guild, out GuildConfiguration? configuration))
-        {
-            configuration = new GuildConfiguration();
-        }
-
-        ulong[] roleIds = context.Member.Roles.Select(r => r.Id).ToArray();
-        if (configuration.CooldownExemptRoles.Any(roleIds.Contains))
-        {
-            expiration = default;
-            return false;
-        }
-
-        if (configuration.Cooldown <= 0)
-        {
-            expiration = default;
-            return false;
-        }
-
-        DateTimeOffset lastSuggestionTime = _suggestionService.GetLastSuggestionTime(context.Guild, context.User);
-        expiration = lastSuggestionTime + TimeSpan.FromSeconds(configuration.Cooldown);
-        return expiration > DateTimeOffset.UtcNow;
     }
 }
