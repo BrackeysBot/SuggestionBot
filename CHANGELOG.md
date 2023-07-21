@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2023-07-22
+
+### Added
+
+- Suggestion embeds now include the timestamp.
+
+### Changed
+
+- Improved performance of pretty much the entire codebase.
+- Initial suggestion embed no longer marked as "edited".
+
 ## [1.2.1] - 2023-07-21
 
 ### Fixed
