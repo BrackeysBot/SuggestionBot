@@ -60,7 +60,7 @@ Below is a table outlining all the commands and whether or not they have ephemer
 
 | Command                 | Ephemeral Response |
 |:------------------------|:-------------------|
-| `/suggest`              | ❌ No               |
+| `/suggest`              | ✅ Yes              |
 | `/suggestion implement` | ❌ No               |
 | `/suggestion reject`    | ❌ No               |
 | `/suggestion block`     | ✅ Yes              |

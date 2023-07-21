@@ -37,6 +37,7 @@ internal sealed class SuggestCommand : ApplicationCommandModule
         if (_userBlockingService.IsUserBlocked(context.Guild, context.User))
         {
             var builder = new DiscordInteractionResponseBuilder();
+            builder.AsEphemeral();
             builder.WithContent("You are blocked from posting suggestions in this server.");
             await context.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, builder)
                 .ConfigureAwait(false);
@@ -48,6 +49,7 @@ internal sealed class SuggestCommand : ApplicationCommandModule
             TimeSpan remaining = expiration - DateTimeOffset.UtcNow;
 
             var builder = new DiscordInteractionResponseBuilder();
+            builder.AsEphemeral();
             builder.WithContent($"You are on cooldown. You can suggest again in {remaining.Humanize()}.");
             await context.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, builder)
                 .ConfigureAwait(false);
@@ -83,6 +85,7 @@ internal sealed class SuggestCommand : ApplicationCommandModule
 
         _suggestionService.UpdateSuggestionMessage(suggestion, message);
         followUp.WithContent($"Your suggestion has been created and can be viewed here: {message.JumpLink}");
+        followUp.AsEphemeral();
         await context.FollowUpAsync(followUp).ConfigureAwait(false);
     }
 
