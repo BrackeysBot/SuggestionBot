@@ -1,0 +1,16 @@
+version: '3.9'
+services:
+  suggestionbot:
+    container_name: SuggestionBot
+    pull_policy: build
+    build: .
+    volumes:
+      - type: bind
+        source: /var/log/brackeysbot/suggestionbot
+        target: /app/logs
+      - type: bind
+        source: /etc/brackeysbot/suggestionbot
+        target: /app/data
+    restart: always
+    environment:
+      - DISCORD_TOKEN=${DISCORD_TOKEN}
