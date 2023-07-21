@@ -432,6 +432,19 @@ internal sealed class SuggestionService : BackgroundService
             return false;
         }
 
+        string humanizedStatus = status.Humanize(LetterCasing.AllCaps);
+        string oldHumanizedStatus = suggestion.Status.Humanize(LetterCasing.AllCaps);
+
+        var embed = new DiscordEmbedBuilder();
+        embed.WithColor(DiscordColor.CornflowerBlue);
+        embed.WithTitle("Suggestion Status Updated");
+        embed.WithDescription($"The status of suggestion {suggestion.Id} has been updated to **{humanizedStatus}**.");
+        embed.AddField("Old Status", oldHumanizedStatus, true);
+        embed.AddField("New Status", humanizedStatus, true);
+        embed.AddField("Staff Member", staffMember.Mention, true);
+        embed.AddField("View Suggestion", GetSuggestionLink(suggestion), true);
+        _ = _logService.LogAsync(suggestion.GuildId, embed);
+
         suggestion.Status = status;
         suggestion.StaffMemberId = staffMember.Id;
 

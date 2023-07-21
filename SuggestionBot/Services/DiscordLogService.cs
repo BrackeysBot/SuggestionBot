@@ -35,6 +35,21 @@ internal sealed class DiscordLogService : BackgroundService
     /// <summary>
     ///     Sends an embed to the log channel of the specified guild.
     /// </summary>
+    /// <param name="guildId">The ID of the guild whose log channel in which to post the embed.</param>
+    /// <param name="embed">The embed to post.</param>
+    /// <exception cref="ArgumentNullException">
+    ///     <paramref name="embed" /> is <see langword="null" />.
+    /// </exception>
+    public Task LogAsync(ulong guildId, DiscordEmbed embed)
+    {
+        return _discordClient.Guilds.TryGetValue(guildId, out DiscordGuild? guild)
+            ? LogAsync(guild, embed)
+            : Task.CompletedTask;
+    }
+
+    /// <summary>
+    ///     Sends an embed to the log channel of the specified guild.
+    /// </summary>
     /// <param name="guild">The guild whose log channel in which to post the embed.</param>
     /// <param name="embed">The embed to post.</param>
     /// <exception cref="ArgumentNullException">
