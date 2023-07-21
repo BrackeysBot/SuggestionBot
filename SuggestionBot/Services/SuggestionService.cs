@@ -247,6 +247,26 @@ internal sealed class SuggestionService : BackgroundService
     }
 
     /// <summary>
+    ///     Returns the jump link for the specified suggestion.
+    /// </summary>
+    /// <param name="suggestion">The suggestion.</param>
+    /// <returns>The jump link for the suggestion.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="suggestion" /> is <see langword="null" />.</exception>
+    public Uri GetSuggestionLink(Suggestion suggestion)
+    {
+        if (suggestion is null)
+        {
+            throw new ArgumentNullException(nameof(suggestion));
+        }
+
+        ulong guildId = suggestion.GuildId;
+        ulong messageId = suggestion.MessageId;
+
+        _configurationService.TryGetGuildConfiguration(guildId, out GuildConfiguration? configuration);
+        return new Uri($"https://discord.com/channels/{guildId}/{configuration?.SuggestionChannel}/{messageId}");
+    }
+
+    /// <summary>
     ///     Marks a suggestion as implemented, and optionally updates the remarks for the implementation.
     /// </summary>
     /// <param name="suggestion">The suggestion to update.</param>
