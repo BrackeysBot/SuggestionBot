@@ -79,6 +79,7 @@ internal sealed class SuggestCommand : ApplicationCommandModule
         if (message == null)
         {
             followUp.WithContent("Failed to post suggestion. If this issue persists, please contact ModMail.");
+            followUp.AsEphemeral();
             await context.FollowUpAsync(followUp).ConfigureAwait(false);
             return;
         }
