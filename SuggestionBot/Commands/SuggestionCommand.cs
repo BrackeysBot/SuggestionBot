@@ -1,4 +1,5 @@
-﻿using DSharpPlus.SlashCommands;
+using DSharpPlus;
+using DSharpPlus.SlashCommands;
 using DSharpPlus.SlashCommands.Attributes;
 using SuggestionBot.Services;
 
@@ -8,6 +9,8 @@ namespace SuggestionBot.Commands;
 [SlashRequireGuild]
 internal sealed partial class SuggestionCommand : ApplicationCommandModule
 {
+    private const InteractionResponseType ResponseType = InteractionResponseType.ChannelMessageWithSource;
+
     private readonly SuggestionService _suggestionService;
     private readonly UserBlockingService _userBlockingService;
 
