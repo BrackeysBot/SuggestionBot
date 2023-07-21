@@ -32,8 +32,25 @@ internal sealed class ConfigurationService
     /// <exception cref="ArgumentNullException"><paramref name="guild" /> is <see langword="null" />.</exception>
     public GuildConfiguration? GetGuildConfiguration(DiscordGuild guild)
     {
-        ArgumentNullException.ThrowIfNull(guild);
+        if (guild is null)
+        {
+            throw new ArgumentNullException(nameof(guild));
+        }
+
         return _configuration.GetSection(guild.Id.ToString())?.Get<GuildConfiguration>();
+    }
+
+    /// <summary>
+    ///     Gets the bot configuration for the specified guild.
+    /// </summary>
+    /// <param name="guildId">The ID of the guild whose configuration to retrieve.</param>
+    /// <returns>
+    ///     A <see cref="GuildConfiguration" /> containing the configuration, or <see langword="null" /> if no configuration is
+    ///     defined.
+    /// </returns>
+    public GuildConfiguration? GetGuildConfiguration(ulong guildId)
+    {
+        return _configuration.GetSection(guildId.ToString())?.Get<GuildConfiguration>();
     }
 
     /// <summary>
@@ -52,9 +69,23 @@ internal sealed class ConfigurationService
         configuration = null;
 
         // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
-        if (guild is null) return false;
+        return guild is not null && TryGetGuildConfiguration(guild.Id, out configuration);
+    }
 
-        configuration = GetGuildConfiguration(guild);
+    /// <summary>
+    ///     Attempts to get the bot configuration for the specified guild.
+    /// </summary>
+    /// <param name="guildId">The ID of the guild whose configuration to retrieve.</param>
+    /// <param name="configuration">
+    ///     When this method returns, contains the <see cref="GuildConfiguration" /> for the specified guild, or
+    ///     <see langword="null" /> if no configuration is defined.
+    /// </param>
+    /// <returns>
+    ///     <see langword="true" /> if the specified guild has a configuration; otherwise, <see langword="false" />.
+    /// </returns>
+    public bool TryGetGuildConfiguration(ulong guildId, [NotNullWhen(true)] out GuildConfiguration? configuration)
+    {
+        configuration = GetGuildConfiguration(guildId);
         return configuration is not null;
     }
 }
