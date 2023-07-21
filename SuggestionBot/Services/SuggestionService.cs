@@ -54,8 +54,15 @@ internal sealed class SuggestionService : BackgroundService
     /// </exception>
     public Suggestion CreateSuggestion(DiscordMember member, string content)
     {
-        if (member == null) throw new ArgumentNullException(nameof(member));
-        if (content == null) throw new ArgumentNullException(nameof(content));
+        if (member == null)
+        {
+            throw new ArgumentNullException(nameof(member));
+        }
+
+        if (content == null)
+        {
+            throw new ArgumentNullException(nameof(content));
+        }
 
         ulong guildId = member.Guild.Id;
 
@@ -127,7 +134,10 @@ internal sealed class SuggestionService : BackgroundService
     /// <exception cref="ArgumentNullException"><paramref name="guild" /> is <see langword="null" />.</exception>
     public IReadOnlyList<Suggestion> GetSuggestions(DiscordGuild guild, bool onlyReturnOpen = false)
     {
-        if (guild is null) throw new ArgumentNullException(nameof(guild));
+        if (guild is null)
+        {
+            throw new ArgumentNullException(nameof(guild));
+        }
 
         if (!_suggestions.TryGetValue(guild.Id, out List<Suggestion>? suggestions))
         {
@@ -154,7 +164,11 @@ internal sealed class SuggestionService : BackgroundService
     /// </exception>
     public async Task<DiscordMessage?> PostSuggestionAsync(Suggestion suggestion)
     {
-        if (suggestion is null) throw new ArgumentNullException(nameof(suggestion));
+        if (suggestion is null)
+        {
+            throw new ArgumentNullException(nameof(suggestion));
+        }
+
         if (!_discordClient.Guilds.TryGetValue(suggestion.GuildId, out DiscordGuild? guild))
         {
             _logger.LogTrace("Guild {GuildId} does not exist", suggestion.GuildId);
@@ -234,17 +248,37 @@ internal sealed class SuggestionService : BackgroundService
     /// </exception>
     public async Task UpdateSuggestionAsync(Suggestion suggestion)
     {
-        if (suggestion is null) throw new ArgumentNullException(nameof(suggestion));
-        if (suggestion.MessageId == 0) return;
+        if (suggestion is null)
+        {
+            throw new ArgumentNullException(nameof(suggestion));
+        }
 
-        if (!_discordClient.Guilds.TryGetValue(suggestion.GuildId, out DiscordGuild? guild)) return;
-        if (!_configurationService.TryGetGuildConfiguration(guild, out GuildConfiguration? configuration)) return;
+        if (suggestion.MessageId == 0)
+        {
+            return;
+        }
+
+        if (!_discordClient.Guilds.TryGetValue(suggestion.GuildId, out DiscordGuild? guild))
+        {
+            return;
+        }
+
+        if (!_configurationService.TryGetGuildConfiguration(guild, out GuildConfiguration? configuration))
+        {
+            return;
+        }
 
         DiscordChannel? channel = guild.GetChannel(configuration.SuggestionChannel);
-        if (channel is null) return;
+        if (channel is null)
+        {
+            return;
+        }
 
         DiscordMessage? message = await channel.GetMessageAsync(suggestion.MessageId).ConfigureAwait(false);
-        if (message is null) return;
+        if (message is null)
+        {
+            return;
+        }
 
         DiscordEmbed embed = await GetSuggestionEmbedAsync(suggestion).ConfigureAwait(false);
         await message.ModifyAsync(m => m.Embed = embed).ConfigureAwait(false);
