@@ -69,6 +69,7 @@ internal sealed class SuggestCommand : ApplicationCommandModule
         if (string.IsNullOrWhiteSpace(input.Value))
         {
             followUp.WithContent("No content provided. Suggestion cancelled.");
+            followUp.AsEphemeral();
             await context.FollowUpAsync(followUp).ConfigureAwait(false);
             return;
         }
