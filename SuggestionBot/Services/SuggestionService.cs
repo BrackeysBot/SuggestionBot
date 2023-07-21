@@ -93,7 +93,8 @@ internal sealed class SuggestionService : BackgroundService
             return DateTimeOffset.MinValue;
         }
 
-        return suggestions.Where(s => s.GuildId == guild.Id && s.AuthorId == user.Id).Max(s => s.Timestamp);
+        Suggestion[] userSuggestions = suggestions.Where(s => s.GuildId == guild.Id && s.AuthorId == user.Id).ToArray();
+        return userSuggestions.Length == 0 ? DateTimeOffset.MinValue : userSuggestions.Max(s => s.Timestamp);
     }
 
     /// <summary>
@@ -217,7 +218,7 @@ internal sealed class SuggestionService : BackgroundService
 
         if (!_discordClient.Guilds.TryGetValue(suggestion.GuildId, out DiscordGuild? guild)) return;
         if (!_configurationService.TryGetGuildConfiguration(guild, out GuildConfiguration? configuration)) return;
-        
+
         DiscordChannel? channel = guild.GetChannel(configuration.SuggestionChannel);
         if (channel is null) return;
 
