@@ -97,6 +97,13 @@ internal sealed class SuggestCommand : ApplicationCommandModule
             configuration = new GuildConfiguration();
         }
 
+        ulong[] roleIds = context.Member.Roles.Select(r => r.Id).ToArray();
+        if (configuration.CooldownExemptRoles.Any(roleIds.Contains))
+        {
+            expiration = default;
+            return false;
+        }
+
         if (configuration.Cooldown <= 0)
         {
             expiration = default;

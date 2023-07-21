@@ -12,6 +12,12 @@ public sealed class GuildConfiguration
     public int Cooldown { get; set; } = 3600;
 
     /// <summary>
+    ///     Gets or sets the exempt roles for posting suggestions.
+    /// </summary>
+    /// <value>The exempt roles for posting suggestions.</value>
+    public ulong[] CooldownExemptRoles { get; set; } = Array.Empty<ulong>();
+
+    /// <summary>
     ///     Gets or sets the embed color for implemented suggestions.
     /// </summary>
     /// <value>The embed color for implemented suggestions.</value>
