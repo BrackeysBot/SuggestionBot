@@ -1,5 +1,4 @@
-using DSharpPlus;
-using DSharpPlus.Entities;
+﻿using DSharpPlus.Entities;
 using DSharpPlus.SlashCommands;
 using SuggestionBot.AutocompleteProviders;
 using SuggestionBot.Data;
@@ -11,32 +10,35 @@ internal sealed partial class SuggestionCommand
     [SlashCommand("implement", "Implements a suggestion.", false)]
     public async Task ImplementAsync(InteractionContext context,
         [Option("suggestion", "The suggestion to implement."), Autocomplete(typeof(SuggestionAutocompleteProvider))]
-        string rawSuggestionId)
+        string query)
     {
-        Suggestion? suggestion = null;
-        ulong guildId = context.Guild.Id;
-
-        if (long.TryParse(rawSuggestionId, out long suggestionId) &&
-            _suggestionService.TryGetSuggestion(guildId, suggestionId, out suggestion))
-        {
-        }
-        else if (ulong.TryParse(rawSuggestionId, out ulong messageId) &&
-                 _suggestionService.TryGetSuggestion(guildId, messageId, out suggestion))
-        {
-        }
-
         var response = new DiscordInteractionResponseBuilder();
-        if (suggestion is null)
+
+        if (!TryGetSuggestion(context.Guild, query, out Suggestion? suggestion))
         {
-            response.WithContent("The suggestion could not be found.");
+            response.AsEphemeral();
+            response.AddEmbed(CreateNotFoundEmbed(query));
+            await context.CreateResponseAsync(ResponseType, response).ConfigureAwait(false);
+            return;
+        }
+
+        var embed = new DiscordEmbedBuilder();
+        if (_suggestionService.Implement(suggestion, context.Member))
+        {
+            embed.WithColor(DiscordColor.Orange);
+            embed.WithTitle("Suggestion Implemented");
+            embed.WithDescription($"The suggestion with the ID {suggestion.Id:N} has been marked as IMPLEMENTED.");
+            response.AddEmbed(embed);
         }
         else
         {
-            _suggestionService.UpdateSuggestionStatus(suggestion, SuggestionStatus.Implemented, context.Member);
-            await _suggestionService.UpdateSuggestionAsync(suggestion).ConfigureAwait(false);
-            response.WithContent("The suggestion has been updated.");
+            embed.WithColor(DiscordColor.Orange);
+            embed.WithTitle("Suggestion Unchanged");
+            embed.WithDescription($"The suggestion with the ID {suggestion.Id:N} was already implemented. " +
+                                  "No changes were made.");
         }
 
+        response.AddEmbed(embed);
         await context.CreateResponseAsync(ResponseType, response).ConfigureAwait(false);
     }
 }

@@ -155,6 +155,44 @@ internal sealed class SuggestionService : BackgroundService
     }
 
     /// <summary>
+    ///     Marks a suggestion as implemented, and optionally updates the remarks for the implementation.
+    /// </summary>
+    /// <param name="suggestion">The suggestion to update.</param>
+    /// <param name="staffMember">The staff member who implemented the suggestion.</param>
+    /// <returns><see langword="true" /> if the status was updated; otherwise, <see langword="false" />.</returns>
+    /// <exception cref="ArgumentNullException">
+    ///     <para><paramref name="suggestion" /> is <see langword="null" />.</para>
+    ///     -or-
+    ///     <para><paramref name="staffMember" /> is <see langword="null" />.</para>
+    /// </exception>
+    public bool Implement(Suggestion suggestion, DiscordMember staffMember)
+    {
+        if (suggestion is null)
+        {
+            throw new ArgumentNullException(nameof(suggestion));
+        }
+
+        if (staffMember is null)
+        {
+            throw new ArgumentNullException(nameof(staffMember));
+        }
+
+        if (!SetStatus(suggestion, SuggestionStatus.Implemented))
+        {
+            return false;
+        }
+
+        _logger.LogInformation("{StaffMember} marked suggestion {Id} as IMPLEMENTED", staffMember, suggestion.Id);
+
+        suggestion.StaffMemberId = staffMember.Id;
+
+        using SuggestionContext context = _contextFactory.CreateDbContext();
+        context.Suggestions.Update(suggestion);
+        context.SaveChanges();
+        return true;
+    }
+
+    /// <summary>
     ///     Posts a suggestion to the suggestion channel of the guild in which it was made.
     /// </summary>
     /// <param name="suggestion">The suggestion to post.</param>
@@ -193,8 +231,71 @@ internal sealed class SuggestionService : BackgroundService
 
         await message.CreateReactionAsync(DiscordEmoji.FromUnicode("👍")).ConfigureAwait(false);
         await message.CreateReactionAsync(DiscordEmoji.FromUnicode("👎")).ConfigureAwait(false);
-
         return message;
+    }
+
+    /// <summary>
+    ///     Marks a suggestion as rejected, and updates the reason for the rejection if one is provided.
+    /// </summary>
+    /// <param name="suggestion">The suggestion to update.</param>
+    /// <param name="staffMember">The staff member who rejected the suggestion.</param>
+    /// <returns><see langword="true" /> if the status was updated; otherwise, <see langword="false" />.</returns>
+    /// <exception cref="ArgumentNullException">
+    ///     <para><paramref name="suggestion" /> is <see langword="null" />.</para>
+    ///     -or-
+    ///     <para><paramref name="staffMember" /> is <see langword="null" />.</para>
+    /// </exception>
+    public bool Reject(Suggestion suggestion, DiscordMember staffMember)
+    {
+        if (suggestion is null)
+        {
+            throw new ArgumentNullException(nameof(suggestion));
+        }
+
+        if (staffMember is null)
+        {
+            throw new ArgumentNullException(nameof(staffMember));
+        }
+
+        if (!SetStatus(suggestion, SuggestionStatus.Rejected))
+        {
+            return false;
+        }
+
+        _logger.LogInformation("{StaffMember} marked suggestion {Id} as REJECTED", staffMember, suggestion.Id);
+
+        suggestion.StaffMemberId = staffMember.Id;
+
+        using SuggestionContext context = _contextFactory.CreateDbContext();
+        context.Suggestions.Update(suggestion);
+        context.SaveChanges();
+        return true;
+    }
+
+    /// <summary>
+    ///     Sets the status of a suggestion.
+    /// </summary>
+    /// <param name="suggestion">The suggestion to update.</param>
+    /// <param name="status">The new status of the suggestion.</param>
+    /// <returns><see langword="true" /> if the status was updated; otherwise, <see langword="false" />.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="suggestion" /> is <see langword="null" />.</exception>
+    public bool SetStatus(Suggestion suggestion, SuggestionStatus status)
+    {
+        if (suggestion is null)
+        {
+            throw new ArgumentNullException(nameof(suggestion));
+        }
+
+        if (suggestion.Status == status)
+        {
+            return false;
+        }
+
+        suggestion.Status = status;
+        using SuggestionContext context = _contextFactory.CreateDbContext();
+        context.Suggestions.Update(suggestion);
+        context.SaveChanges();
+        return true;
     }
 
     /// <summary>
@@ -349,39 +450,6 @@ internal sealed class SuggestionService : BackgroundService
         using SuggestionContext context = _contextFactory.CreateDbContext();
         context.Suggestions.Update(suggestion);
         context.SaveChanges();
-    }
-
-    /// <summary>
-    ///     Updates the status of a suggestion.
-    /// </summary>
-    /// <param name="suggestion">The suggestion to update.</param>
-    /// <param name="status">The new status of the suggestion.</param>
-    /// <param name="staffMember">The staff member who updated the suggestion.</param>
-    /// <exception cref="ArgumentNullException"><paramref name="suggestion" /> is <see langword="null" />.</exception>
-    public void UpdateSuggestionStatus(Suggestion suggestion, SuggestionStatus status, DiscordMember staffMember)
-    {
-        if (suggestion is null) throw new ArgumentNullException(nameof(suggestion));
-
-        suggestion.Status = status;
-        suggestion.StaffMemberId = staffMember.Id;
-
-        using SuggestionContext context = _contextFactory.CreateDbContext();
-        context.Suggestions.Update(suggestion);
-        context.SaveChanges();
-
-        var embed = new DiscordEmbedBuilder();
-        embed.WithColor(DiscordColor.CornflowerBlue);
-        embed.WithTitle("Suggestion Updated");
-        embed.WithDescription($"Suggestion {suggestion.Id} has been updated by {staffMember.Mention}.");
-        embed.AddField("Status", $"{status.Humanize(LetterCasing.AllCaps)}", true);
-        if (_configurationService.TryGetGuildConfiguration(staffMember.Guild, out GuildConfiguration? configuration))
-        {
-            ulong suggestionChannelId = configuration.SuggestionChannel;
-            var url = $"https://discord.com/channels/{suggestion.GuildId}/{suggestionChannelId}/{suggestion.MessageId}";
-            embed.AddField("View Suggestion", $"[Click here]({url})");
-        }
-
-        _ = _logService.LogAsync(staffMember.Guild, embed);
     }
 
     /// <inheritdoc />
