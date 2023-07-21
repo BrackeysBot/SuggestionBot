@@ -28,7 +28,6 @@ internal sealed partial class SuggestionCommand
             embed.WithColor(DiscordColor.Orange);
             embed.WithTitle("Suggestion Implemented");
             embed.WithDescription($"The suggestion with the ID {suggestion.Id:N} has been marked as IMPLEMENTED.");
-            response.AddEmbed(embed);
         }
         else
         {
