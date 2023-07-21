@@ -66,10 +66,11 @@ internal sealed class SuggestCommand : ApplicationCommandModule
         if (response != DiscordModalResponse.Success) return;
 
         var followUp = new DiscordFollowupMessageBuilder();
+        followUp.AsEphemeral();
+
         if (string.IsNullOrWhiteSpace(input.Value))
         {
             followUp.WithContent("No content provided. Suggestion cancelled.");
-            followUp.AsEphemeral();
             await context.FollowUpAsync(followUp).ConfigureAwait(false);
             return;
         }
@@ -79,13 +80,11 @@ internal sealed class SuggestCommand : ApplicationCommandModule
         if (message == null)
         {
             followUp.WithContent("Failed to post suggestion. If this issue persists, please contact ModMail.");
-            followUp.AsEphemeral();
             await context.FollowUpAsync(followUp).ConfigureAwait(false);
             return;
         }
 
         followUp.WithContent($"Your suggestion has been created and can be viewed here: {message.JumpLink}");
-        followUp.AsEphemeral();
         await context.FollowUpAsync(followUp).ConfigureAwait(false);
     }
 }
