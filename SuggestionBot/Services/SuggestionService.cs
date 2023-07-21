@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using DSharpPlus;
 using DSharpPlus.Entities;
@@ -83,18 +83,39 @@ internal sealed class SuggestionService : BackgroundService
     /// <summary>
     ///     Gets the last time a user made a suggestion in the specified guild.
     /// </summary>
-    /// <param name="guild">The guild.</param>
-    /// <param name="user">The user.</param>
+    /// <param name="member">The member.</param>
     /// <returns>The last time the user made a suggestion.</returns>
-    public DateTimeOffset GetLastSuggestionTime(DiscordGuild guild, DiscordUser user)
+    /// <exception cref="ArgumentNullException"><paramref name="member" /> is <see langword="null" />.</exception>
+    public DateTimeOffset GetLastSuggestionTime(DiscordMember member)
     {
-        if (!_suggestions.TryGetValue(guild.Id, out List<Suggestion>? suggestions))
+        if (member is null)
         {
-            return DateTimeOffset.MinValue;
+            throw new ArgumentNullException(nameof(member));
         }
 
-        Suggestion[] userSuggestions = suggestions.Where(s => s.GuildId == guild.Id && s.AuthorId == user.Id).ToArray();
+        Suggestion[] userSuggestions = GetSuggestionsBy(member);
         return userSuggestions.Length == 0 ? DateTimeOffset.MinValue : userSuggestions.Max(s => s.Timestamp);
+    }
+
+    /// <summary>
+    ///     Gets all suggestions made by the specified member.
+    /// </summary>
+    /// <param name="member">The member.</param>
+    /// <returns>An array of suggestions made by the member.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="member" /> is <see langword="null" />.</exception>
+    public Suggestion[] GetSuggestionsBy(DiscordMember member)
+    {
+        if (member is null)
+        {
+            throw new ArgumentNullException(nameof(member));
+        }
+
+        ulong guildId = member.Guild.Id;
+        ulong userId = member.Id;
+
+        return _suggestions.TryGetValue(guildId, out List<Suggestion>? suggestions)
+            ? suggestions.FindAll(s => s.GuildId == guildId && s.AuthorId == userId).ToArray()
+            : Array.Empty<Suggestion>();
     }
 
     /// <summary>
