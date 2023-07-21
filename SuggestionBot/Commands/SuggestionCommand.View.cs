@@ -1,5 +1,4 @@
-﻿using DSharpPlus;
-using DSharpPlus.Entities;
+﻿using DSharpPlus.Entities;
 using DSharpPlus.SlashCommands;
 using SuggestionBot.Data;
 
@@ -29,14 +28,12 @@ internal sealed partial class SuggestionCommand
         {
             builder.WithContent($"The suggestion with ID {idRaw} does not exist.");
             builder.AsEphemeral();
-            await context.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, builder)
-                .ConfigureAwait(false);
+            await context.CreateResponseAsync(ResponseType, builder).ConfigureAwait(false);
             return;
         }
 
-        DiscordEmbed embed = await _suggestionService.GetSuggestionEmbedAsync(suggestion).ConfigureAwait(false);
+        DiscordEmbed embed = _suggestionService.CreatePublicEmbed(suggestion);
         builder.AddEmbed(embed);
-        await context.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, builder)
-            .ConfigureAwait(false);
+        await context.CreateResponseAsync(ResponseType, builder).ConfigureAwait(false);
     }
 }

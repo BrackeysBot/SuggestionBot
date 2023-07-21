@@ -1,5 +1,4 @@
-﻿using DSharpPlus;
-using DSharpPlus.Entities;
+﻿using DSharpPlus.Entities;
 using DSharpPlus.SlashCommands;
 
 namespace SuggestionBot.Commands;
@@ -17,7 +16,6 @@ internal sealed partial class SuggestionCommand
         var builder = new DiscordInteractionResponseBuilder();
         builder.WithContent($"The user {user.Mention} has been blocked from posting suggestions.");
         builder.AsEphemeral();
-        await context.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, builder)
-            .ConfigureAwait(false);
+        await context.CreateResponseAsync(ResponseType, builder).ConfigureAwait(false);
     }
 }

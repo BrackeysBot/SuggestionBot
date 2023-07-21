@@ -1,4 +1,4 @@
-﻿using DSharpPlus;
+using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.SlashCommands;
 using NLog;
@@ -40,8 +40,7 @@ internal sealed partial class SuggestionCommand
                 response.WithContent("The suggestion has been updated.");
             }
 
-            await context.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, response)
-                .ConfigureAwait(false);
+            await context.CreateResponseAsync(ResponseType, response).ConfigureAwait(false);
         }
         catch (Exception exception)
         {
