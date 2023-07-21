@@ -27,13 +27,13 @@ internal sealed partial class SuggestionCommand
         {
             embed.WithColor(DiscordColor.Orange);
             embed.WithTitle("Suggestion Implemented");
-            embed.WithDescription($"The suggestion with the ID {suggestion.Id:N} has been marked as IMPLEMENTED.");
+            embed.WithDescription($"The suggestion with the ID {suggestion.Id} has been marked as IMPLEMENTED.");
         }
         else
         {
             embed.WithColor(DiscordColor.Orange);
             embed.WithTitle("Suggestion Unchanged");
-            embed.WithDescription($"The suggestion with the ID {suggestion.Id:N} was already implemented. " +
+            embed.WithDescription($"The suggestion with the ID {suggestion.Id} was already implemented. " +
                                   "No changes were made.");
         }
 

@@ -27,13 +27,13 @@ internal sealed partial class SuggestionCommand
         {
             embed.WithColor(DiscordColor.Orange);
             embed.WithTitle("Suggestion Rejected");
-            embed.WithDescription($"The suggestion with the ID {suggestion.Id:N} has been marked as REJECTED.");
+            embed.WithDescription($"The suggestion with the ID {suggestion.Id} has been marked as REJECTED.");
         }
         else
         {
             embed.WithColor(DiscordColor.Orange);
             embed.WithTitle("Suggestion Unchanged");
-            embed.WithDescription($"The suggestion with the ID {suggestion.Id:N} was already rejected. " +
+            embed.WithDescription($"The suggestion with the ID {suggestion.Id} was already rejected. " +
                                   "No changes were made.");
         }
 
