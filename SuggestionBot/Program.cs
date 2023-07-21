@@ -27,6 +27,7 @@ builder.Services.AddDbContextFactory<SuggestionContext>();
 builder.Services.AddHostedService<DatabaseService>();
 builder.Services.AddHostedSingleton<DiscordLogService>();
 builder.Services.AddSingleton<ConfigurationService>();
+builder.Services.AddSingleton<CooldownService>();
 builder.Services.AddHostedSingleton<SuggestionService>();
 builder.Services.AddHostedSingleton<UserBlockingService>();
 builder.Services.AddHostedSingleton<BotService>();
