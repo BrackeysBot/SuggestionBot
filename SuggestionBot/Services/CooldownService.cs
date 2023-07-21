@@ -43,7 +43,9 @@ internal sealed class CooldownService
         }
 
         ulong[] roleIds = member.Roles.Select(r => r.Id).ToArray();
-        if (configuration.CooldownExemptRoles.Any(roleIds.Contains))
+        ulong[] exemptRoleIds = configuration.CooldownExemptRoles;
+
+        if (roleIds.Length > 0 && exemptRoleIds.Length > 0 && exemptRoleIds.Any(roleIds.Contains))
         {
             return TimeSpan.Zero;
         }
