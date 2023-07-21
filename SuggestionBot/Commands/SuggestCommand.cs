@@ -1,4 +1,4 @@
-using DSharpPlus;
+﻿using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.SlashCommands;
 using DSharpPlus.SlashCommands.Attributes;
@@ -60,8 +60,8 @@ internal sealed class SuggestCommand : ApplicationCommandModule
 
         DiscordModalTextInput input = modal.AddInput("What is your suggestion", "e.g. The server should have [...]",
             inputStyle: TextInputStyle.Paragraph, maxLength: 4000);
-        DiscordModalResponse response =
-            await modal.Build().RespondToAsync(context.Interaction, TimeSpan.FromMinutes(5)).ConfigureAwait(false);
+        DiscordModalResponse response = await modal.Build().RespondToAsync(context.Interaction, TimeSpan.FromMinutes(5))
+            .ConfigureAwait(false);
 
         if (response != DiscordModalResponse.Success) return;
 
