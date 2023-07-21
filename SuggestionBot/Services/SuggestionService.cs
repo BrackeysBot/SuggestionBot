@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using DSharpPlus;
 using DSharpPlus.Entities;
@@ -44,6 +45,71 @@ internal sealed class SuggestionService : BackgroundService
     }
 
     /// <summary>
+    ///     Creates a new embed for the specified suggestion.
+    /// </summary>
+    /// <param name="suggestion">The suggestion.</param>
+    /// <returns>An embed for the suggestion.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="suggestion" /> is <see langword="null" />.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">
+    ///     The <see cref="Suggestion.Status" /> of <paramref name="suggestion" /> is not a valid value.
+    /// </exception>
+    public DiscordEmbed CreatePublicEmbed(Suggestion suggestion)
+    {
+        if (suggestion is null)
+        {
+            throw new ArgumentNullException(nameof(suggestion));
+        }
+
+        if (!_discordClient.Guilds.TryGetValue(suggestion.GuildId, out DiscordGuild? guild))
+        {
+            return new DiscordEmbedBuilder();
+        }
+
+        if (!_configurationService.TryGetGuildConfiguration(guild, out GuildConfiguration? configuration))
+        {
+            configuration = new GuildConfiguration();
+        }
+
+        string emoji = suggestion.Status switch
+        {
+            SuggestionStatus.Suggested => "🗳️",
+            SuggestionStatus.Rejected => "❌",
+            SuggestionStatus.Implemented => "✅",
+            _ => throw new ArgumentOutOfRangeException(nameof(suggestion), suggestion.Status, null)
+        };
+
+        DiscordUser author = GetAuthor(suggestion);
+        var embed = new DiscordEmbedBuilder();
+        string authorName = author.GetUsernameWithDiscriminator();
+        embed.WithAuthor($"Suggestion from {authorName}", iconUrl: author.GetAvatarUrl(ImageFormat.Png));
+        embed.WithThumbnail(guild.GetIconUrl(ImageFormat.Png));
+        embed.WithDescription(suggestion.Content);
+        embed.WithFooter($"Suggestion {suggestion.Id}");
+        embed.WithTimestamp(suggestion.Timestamp);
+        embed.WithColor(suggestion.Status switch
+        {
+            SuggestionStatus.Suggested => configuration.SuggestedColor,
+            SuggestionStatus.Rejected => configuration.RejectedColor,
+            SuggestionStatus.Implemented => configuration.ImplementedColor,
+            _ => throw new ArgumentOutOfRangeException(nameof(suggestion), suggestion.Status, null)
+        });
+
+        embed.AddField("Status", $"{emoji} **{suggestion.Status.Humanize(LetterCasing.AllCaps)}**", true);
+
+        if (!string.IsNullOrWhiteSpace(suggestion.Reason) && suggestion.Status != SuggestionStatus.Suggested)
+        {
+            embed.AddField(suggestion.Status switch
+            {
+                SuggestionStatus.Implemented => "Remarks",
+                SuggestionStatus.Rejected => "Reason",
+                _ => throw new UnreachableException()
+            }, suggestion.Reason, true);
+        }
+
+        return embed;
+    }
+
+    /// <summary>
     ///     Creates a new suggestion.
     /// </summary>
     /// <param name="member">The member who created the suggestion.</param>
@@ -85,6 +151,32 @@ internal sealed class SuggestionService : BackgroundService
 
         _logger.LogInformation("Created suggestion {SuggestionId} in {Guild}.", suggestion.Id, member.Guild);
         return suggestion;
+    }
+
+    /// <summary>
+    ///     Gets the author of a suggestion.
+    /// </summary>
+    /// <param name="suggestion">The suggestion.</param>
+    /// <returns>The author of the suggestion.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="suggestion" /> is <see langword="null" />.</exception>
+    public DiscordUser GetAuthor(Suggestion suggestion)
+    {
+        if (suggestion is null)
+        {
+            throw new ArgumentNullException(nameof(suggestion));
+        }
+
+        if (_discordClient.Guilds.TryGetValue(suggestion.GuildId, out DiscordGuild? guild))
+        {
+            if (guild.Members.TryGetValue(suggestion.AuthorId, out DiscordMember? member))
+            {
+                return member;
+            }
+        }
+
+        // I hate doing GetAwaiter().GetResult() but I'd rather not make this method async so the embed
+        // creation doesn't require an await. I truly hate this. forgive me father, for I have sinned.
+        return _discordClient.GetUserAsync(suggestion.AuthorId).GetAwaiter().GetResult();
     }
 
     /// <summary>
@@ -225,9 +317,10 @@ internal sealed class SuggestionService : BackgroundService
             return null;
         }
 
-        DiscordMessage message = await channel.SendMessageAsync("...").ConfigureAwait(false);
-        UpdateSuggestionMessage(suggestion, message);
-        await UpdateSuggestionAsync(suggestion).ConfigureAwait(false);
+        _logger.LogInformation("User {User} submitted suggestion {Id} in {Guild}", suggestion.AuthorId, suggestion.Id,
+            guild);
+        DiscordMessage message = await channel.SendMessageAsync(CreatePublicEmbed(suggestion)).ConfigureAwait(false);
+        SetMessage(suggestion, message);
 
         await message.CreateReactionAsync(DiscordEmoji.FromUnicode("👍")).ConfigureAwait(false);
         await message.CreateReactionAsync(DiscordEmoji.FromUnicode("👎")).ConfigureAwait(false);
@@ -266,6 +359,37 @@ internal sealed class SuggestionService : BackgroundService
 
         suggestion.StaffMemberId = staffMember.Id;
 
+        using SuggestionContext context = _contextFactory.CreateDbContext();
+        context.Suggestions.Update(suggestion);
+        context.SaveChanges();
+        return true;
+    }
+
+    /// <summary>
+    ///     Sets the message of a suggestion.
+    /// </summary>
+    /// <param name="suggestion">The suggestion to update.</param>
+    /// <param name="message">The new message of the suggestion.</param>
+    /// <returns><see langword="true" /> if the message was updated; otherwise, <see langword="false" />.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="suggestion" /> is <see langword="null" />.</exception>
+    public bool SetMessage(Suggestion suggestion, DiscordMessage message)
+    {
+        if (suggestion is null)
+        {
+            throw new ArgumentNullException(nameof(suggestion));
+        }
+
+        if (message is null)
+        {
+            throw new ArgumentNullException(nameof(message));
+        }
+
+        if (suggestion.MessageId == message.Id)
+        {
+            return false;
+        }
+
+        suggestion.MessageId = message.Id;
         using SuggestionContext context = _contextFactory.CreateDbContext();
         context.Suggestions.Update(suggestion);
         context.SaveChanges();
@@ -381,75 +505,13 @@ internal sealed class SuggestionService : BackgroundService
             return;
         }
 
-        DiscordEmbed embed = await GetSuggestionEmbedAsync(suggestion).ConfigureAwait(false);
+        DiscordEmbed embed = CreatePublicEmbed(suggestion);
         await message.ModifyAsync(m => m.Embed = embed).ConfigureAwait(false);
 
         if (suggestion.Status != SuggestionStatus.Suggested)
         {
             await message.DeleteAllReactionsAsync().ConfigureAwait(false);
         }
-    }
-
-    public async Task<DiscordEmbed> GetSuggestionEmbedAsync(Suggestion suggestion)
-    {
-        if (!_discordClient.Guilds.TryGetValue(suggestion.GuildId, out DiscordGuild? guild))
-        {
-            return new DiscordEmbedBuilder();
-        }
-
-        if (!_configurationService.TryGetGuildConfiguration(guild, out GuildConfiguration? configuration))
-        {
-            configuration = new GuildConfiguration();
-        }
-
-        DiscordUser author = await _discordClient.GetUserAsync(suggestion.AuthorId).ConfigureAwait(false);
-
-        var embed = new DiscordEmbedBuilder();
-        string authorName = author.GetUsernameWithDiscriminator();
-        embed.WithAuthor($"Suggestion from {authorName}", iconUrl: author.GetAvatarUrl(ImageFormat.Png));
-        embed.WithThumbnail(guild.GetIconUrl(ImageFormat.Png));
-        embed.WithColor(suggestion.Status switch
-        {
-            SuggestionStatus.Suggested => configuration.SuggestedColor,
-            SuggestionStatus.Rejected => configuration.RejectedColor,
-            SuggestionStatus.Implemented => configuration.ImplementedColor,
-            _ => throw new ArgumentOutOfRangeException(nameof(suggestion), suggestion.Status, null)
-        });
-
-        embed.WithDescription(suggestion.Content);
-        embed.WithFooter($"Suggestion {suggestion.Id}");
-
-        string emoji = suggestion.Status switch
-        {
-            SuggestionStatus.Suggested => "🗳️",
-            SuggestionStatus.Rejected => "❌",
-            SuggestionStatus.Implemented => "✅",
-            _ => throw new ArgumentOutOfRangeException(nameof(suggestion), suggestion.Status, null)
-        };
-
-        embed.AddField("Status", $"{emoji} **{suggestion.Status.Humanize(LetterCasing.AllCaps)}**", true);
-        return embed;
-    }
-
-    /// <summary>
-    ///     Updates the message of a suggestion.
-    /// </summary>
-    /// <param name="suggestion">The suggestion to update.</param>
-    /// <param name="message">The new message of the suggestion.</param>
-    /// <exception cref="ArgumentNullException">
-    ///     <paramref name="suggestion" /> or <paramref name="message" /> is <see langword="null" />.
-    /// </exception>
-    public void UpdateSuggestionMessage(Suggestion suggestion, DiscordMessage message)
-    {
-        if (suggestion is null) throw new ArgumentNullException(nameof(suggestion));
-        if (message is null) throw new ArgumentNullException(nameof(message));
-        if (suggestion.MessageId != 0) return;
-
-        suggestion.MessageId = message.Id;
-
-        using SuggestionContext context = _contextFactory.CreateDbContext();
-        context.Suggestions.Update(suggestion);
-        context.SaveChanges();
     }
 
     /// <inheritdoc />

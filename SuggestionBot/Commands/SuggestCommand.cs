@@ -84,7 +84,6 @@ internal sealed class SuggestCommand : ApplicationCommandModule
             return;
         }
 
-        _suggestionService.UpdateSuggestionMessage(suggestion, message);
         followUp.WithContent($"Your suggestion has been created and can be viewed here: {message.JumpLink}");
         followUp.AsEphemeral();
         await context.FollowUpAsync(followUp).ConfigureAwait(false);
