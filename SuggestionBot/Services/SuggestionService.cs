@@ -289,14 +289,12 @@ internal sealed class SuggestionService : BackgroundService
             throw new ArgumentNullException(nameof(staffMember));
         }
 
-        if (!SetStatus(suggestion, SuggestionStatus.Implemented))
+        if (!SetStatus(suggestion, SuggestionStatus.Implemented, staffMember))
         {
             return false;
         }
 
         _logger.LogInformation("{StaffMember} marked suggestion {Id} as IMPLEMENTED", staffMember, suggestion.Id);
-
-        suggestion.StaffMemberId = staffMember.Id;
 
         using SuggestionContext context = _contextFactory.CreateDbContext();
         context.Suggestions.Update(suggestion);
@@ -370,14 +368,12 @@ internal sealed class SuggestionService : BackgroundService
             throw new ArgumentNullException(nameof(staffMember));
         }
 
-        if (!SetStatus(suggestion, SuggestionStatus.Rejected))
+        if (!SetStatus(suggestion, SuggestionStatus.Rejected, staffMember))
         {
             return false;
         }
 
         _logger.LogInformation("{StaffMember} marked suggestion {Id} as REJECTED", staffMember, suggestion.Id);
-
-        suggestion.StaffMemberId = staffMember.Id;
 
         using SuggestionContext context = _contextFactory.CreateDbContext();
         context.Suggestions.Update(suggestion);
@@ -421,9 +417,10 @@ internal sealed class SuggestionService : BackgroundService
     /// </summary>
     /// <param name="suggestion">The suggestion to update.</param>
     /// <param name="status">The new status of the suggestion.</param>
+    /// <param name="staffMember">The staff member who updated the status.</param>
     /// <returns><see langword="true" /> if the status was updated; otherwise, <see langword="false" />.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="suggestion" /> is <see langword="null" />.</exception>
-    public bool SetStatus(Suggestion suggestion, SuggestionStatus status)
+    public bool SetStatus(Suggestion suggestion, SuggestionStatus status, DiscordMember staffMember)
     {
         if (suggestion is null)
         {
@@ -436,6 +433,8 @@ internal sealed class SuggestionService : BackgroundService
         }
 
         suggestion.Status = status;
+        suggestion.StaffMemberId = staffMember.Id;
+
         using SuggestionContext context = _contextFactory.CreateDbContext();
         context.Suggestions.Update(suggestion);
         context.SaveChanges();
