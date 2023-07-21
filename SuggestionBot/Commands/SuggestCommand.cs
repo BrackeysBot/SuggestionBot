@@ -11,6 +11,8 @@ namespace SuggestionBot.Commands;
 
 internal sealed class SuggestCommand : ApplicationCommandModule
 {
+    private const InteractionResponseType ResponseType = InteractionResponseType.ChannelMessageWithSource;
+
     private readonly CooldownService _cooldownService;
     private readonly SuggestionService _suggestionService;
     private readonly UserBlockingService _userBlockingService;
@@ -39,8 +41,7 @@ internal sealed class SuggestCommand : ApplicationCommandModule
             var builder = new DiscordInteractionResponseBuilder();
             builder.AsEphemeral();
             builder.WithContent("You are blocked from posting suggestions in this server.");
-            await context.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, builder)
-                .ConfigureAwait(false);
+            await context.CreateResponseAsync(ResponseType, builder).ConfigureAwait(false);
             return;
         }
 
@@ -50,8 +51,7 @@ internal sealed class SuggestCommand : ApplicationCommandModule
             var builder = new DiscordInteractionResponseBuilder();
             builder.AsEphemeral();
             builder.WithContent($"You are on cooldown. You can suggest again in {cooldown.Humanize()}.");
-            await context.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource, builder)
-                .ConfigureAwait(false);
+            await context.CreateResponseAsync(ResponseType, builder).ConfigureAwait(false);
             return;
         }
 
