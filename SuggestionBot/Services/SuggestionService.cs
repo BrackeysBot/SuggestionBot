@@ -96,16 +96,6 @@ internal sealed class SuggestionService : BackgroundService
 
         embed.AddField("Status", $"{emoji} **{suggestion.Status.Humanize(LetterCasing.AllCaps)}**", true);
 
-        if (!string.IsNullOrWhiteSpace(suggestion.Reason) && suggestion.Status != SuggestionStatus.Suggested)
-        {
-            embed.AddField(suggestion.Status switch
-            {
-                SuggestionStatus.Implemented => "Remarks",
-                SuggestionStatus.Rejected => "Reason",
-                _ => throw new UnreachableException()
-            }, suggestion.Reason, true);
-        }
-
         return embed;
     }
 
