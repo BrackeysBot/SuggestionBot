@@ -95,6 +95,7 @@ internal sealed class SuggestionService : BackgroundService
         embed.AddField("Status", $"{emoji} **{suggestion.Status.Humanize(LetterCasing.AllCaps)}**", true);
         embed.AddField("Author", author.Mention, true);
         embed.AddField("Submitted", Formatter.Timestamp(suggestion.Timestamp), true);
+        embed.AddField("View Suggestion", GetSuggestionLink(suggestion), true);
 
         if (suggestion.StaffMemberId.HasValue)
         {
