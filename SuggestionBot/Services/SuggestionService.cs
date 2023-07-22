@@ -1,5 +1,4 @@
 using System.Collections.Concurrent;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using DSharpPlus;
 using DSharpPlus.Entities;
@@ -42,6 +41,67 @@ internal sealed class SuggestionService : BackgroundService
         _discordClient = discordClient;
         _configurationService = configurationService;
         _logService = logService;
+    }
+
+    /// <summary>
+    ///     Creates a staff-only embed for the specified suggestion.
+    /// </summary>
+    /// <param name="suggestion">The suggestion.</param>
+    /// <returns>An embed for the suggestion.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="suggestion" /> is <see langword="null" />.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">
+    ///     The <see cref="Suggestion.Status" /> of <paramref name="suggestion" /> is not a valid value.
+    /// </exception>
+    public DiscordEmbed CreatePrivateEmbed(Suggestion suggestion)
+    {
+        if (suggestion is null)
+        {
+            throw new ArgumentNullException(nameof(suggestion));
+        }
+
+        if (!_discordClient.Guilds.TryGetValue(suggestion.GuildId, out DiscordGuild? guild))
+        {
+            return new DiscordEmbedBuilder();
+        }
+
+        if (!_configurationService.TryGetGuildConfiguration(guild, out GuildConfiguration? configuration))
+        {
+            configuration = new GuildConfiguration();
+        }
+
+        string emoji = suggestion.Status switch
+        {
+            SuggestionStatus.Suggested => "🗳️",
+            SuggestionStatus.Rejected => "❌",
+            SuggestionStatus.Implemented => "✅",
+            _ => throw new ArgumentOutOfRangeException(nameof(suggestion), suggestion.Status, null)
+        };
+
+        DiscordUser author = GetAuthor(suggestion);
+        var embed = new DiscordEmbedBuilder();
+        string authorName = author.GetUsernameWithDiscriminator();
+        embed.WithAuthor($"Suggestion from {authorName}", iconUrl: author.GetAvatarUrl(ImageFormat.Png));
+        embed.WithThumbnail(guild.GetIconUrl(ImageFormat.Png));
+        embed.WithDescription(suggestion.Content);
+        embed.WithFooter($"Suggestion {suggestion.Id}");
+        embed.WithColor(suggestion.Status switch
+        {
+            SuggestionStatus.Suggested => configuration.SuggestedColor,
+            SuggestionStatus.Rejected => configuration.RejectedColor,
+            SuggestionStatus.Implemented => configuration.ImplementedColor,
+            _ => throw new ArgumentOutOfRangeException(nameof(suggestion), suggestion.Status, null)
+        });
+
+        embed.AddField("Status", $"{emoji} **{suggestion.Status.Humanize(LetterCasing.AllCaps)}**", true);
+        embed.AddField("Author", author.Mention, true);
+        embed.AddField("Submitted", Formatter.Timestamp(suggestion.Timestamp), true);
+
+        if (suggestion.StaffMemberId.HasValue)
+        {
+            embed.AddField("Approver", MentionUtility.MentionUser(suggestion.StaffMemberId.Value), true);
+        }
+
+        return embed;
     }
 
     /// <summary>

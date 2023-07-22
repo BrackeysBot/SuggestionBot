@@ -32,7 +32,7 @@ internal sealed partial class SuggestionCommand
             return;
         }
 
-        DiscordEmbed embed = _suggestionService.CreatePublicEmbed(suggestion);
+        DiscordEmbed embed = _suggestionService.CreatePrivateEmbed(suggestion);
         builder.AddEmbed(embed);
         await context.CreateResponseAsync(ResponseType, builder).ConfigureAwait(false);
     }
