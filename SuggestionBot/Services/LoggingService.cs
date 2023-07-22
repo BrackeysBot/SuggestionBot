@@ -2,7 +2,6 @@
 using Microsoft.Extensions.Hosting;
 using NLog;
 using NLog.Config;
-using NLog.LayoutRenderers;
 using NLog.Layouts;
 using SuggestionBot.Logging;
 using LogLevel = NLog.LogLevel;
@@ -69,8 +68,11 @@ internal sealed class LoggingService : BackgroundService
     {
         LogFile.Directory?.Create();
 
-        LayoutRenderer.Register("TheTime", info => info.TimeStamp.ToString("HH:mm:ss"));
-        LayoutRenderer.Register("ServiceName", info => info.LoggerName);
+        LogManager.Setup().SetupExtensions(builder =>
+        {
+            builder.RegisterLayoutRenderer("TheTime", info => info.TimeStamp.ToString("HH:mm:ss"));
+            builder.RegisterLayoutRenderer("ServiceName", info => info.LoggerName);
+        });
 
         Layout? layout = Layout.FromString("[${TheTime} ${level:uppercase=true}] [${ServiceName}] ${message}");
         var config = new LoggingConfiguration();
