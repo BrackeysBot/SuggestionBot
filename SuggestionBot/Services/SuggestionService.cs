@@ -344,6 +344,14 @@ internal sealed class SuggestionService : BackgroundService
             return null;
         }
 
+        if (guild.Threads.TryGetValue(suggestion.ThreadId, out DiscordThreadChannel? threadChannel))
+        {
+            return threadChannel;
+        }
+
+        // this will probably always return null as threads are not stored in D#+ channel cache.
+        // however, there may be an edge case where the suggestion's thread ID is its own channel,
+        // so we shall use that as a last resort.
         return guild.GetChannel(suggestion.ThreadId) as DiscordThreadChannel;
     }
 
