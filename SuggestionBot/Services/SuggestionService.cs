@@ -378,7 +378,11 @@ internal sealed class SuggestionService : BackgroundService
     /// <param name="suggestion">The suggestion to update.</param>
     /// <param name="message">The new message of the suggestion.</param>
     /// <returns><see langword="true" /> if the message was updated; otherwise, <see langword="false" />.</returns>
-    /// <exception cref="ArgumentNullException"><paramref name="suggestion" /> is <see langword="null" />.</exception>
+    /// <exception cref="ArgumentNullException">
+    ///     <para><paramref name="suggestion" /> is <see langword="null" />.</para>
+    ///     -or-
+    ///     <para><paramref name="message" /> is <see langword="null" />.</para>
+    /// </exception>
     public bool SetMessage(Suggestion suggestion, DiscordMessage message)
     {
         if (suggestion is null)
@@ -410,7 +414,11 @@ internal sealed class SuggestionService : BackgroundService
     /// <param name="status">The new status of the suggestion.</param>
     /// <param name="staffMember">The staff member who updated the status.</param>
     /// <returns><see langword="true" /> if the status was updated; otherwise, <see langword="false" />.</returns>
-    /// <exception cref="ArgumentNullException"><paramref name="suggestion" /> is <see langword="null" />.</exception>
+    /// <exception cref="ArgumentNullException">
+    ///     <para><paramref name="suggestion" /> is <see langword="null" />.</para>
+    ///     -or-
+    ///     <para><paramref name="staffMember" /> is <see langword="null" />.</para>
+    /// </exception>
     public bool SetStatus(Suggestion suggestion, SuggestionStatus status, DiscordMember staffMember)
     {
         if (suggestion is null)
