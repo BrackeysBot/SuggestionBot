@@ -361,6 +361,14 @@ internal sealed class SuggestionService : BackgroundService
 
         await message.CreateReactionAsync(DiscordEmoji.FromUnicode("👍")).ConfigureAwait(false);
         await message.CreateReactionAsync(DiscordEmoji.FromUnicode("👎")).ConfigureAwait(false);
+
+        if (configuration.CreateThreadForSuggestion)
+        {
+            const AutoArchiveDuration archiveDuration = AutoArchiveDuration.Week;
+            var threadName = $"Suggestion from {GetAuthor(suggestion).GetUsernameWithDiscriminator()}";
+            await message.CreateThreadAsync(threadName, archiveDuration).ConfigureAwait(false);
+        }
+
         return message;
     }
 
