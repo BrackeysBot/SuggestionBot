@@ -74,6 +74,7 @@ internal sealed class SuggestionService : BackgroundService
             SuggestionStatus.Suggested => "🗳️",
             SuggestionStatus.Rejected => "❌",
             SuggestionStatus.Implemented => "✅",
+            SuggestionStatus.Accepted => "✅",
             _ => throw new ArgumentOutOfRangeException(nameof(suggestion), suggestion.Status, null)
         };
 
@@ -89,6 +90,7 @@ internal sealed class SuggestionService : BackgroundService
             SuggestionStatus.Suggested => configuration.SuggestedColor,
             SuggestionStatus.Rejected => configuration.RejectedColor,
             SuggestionStatus.Implemented => configuration.ImplementedColor,
+            SuggestionStatus.Accepted => configuration.AcceptedColor,
             _ => throw new ArgumentOutOfRangeException(nameof(suggestion), suggestion.Status, null)
         });
 
@@ -136,6 +138,7 @@ internal sealed class SuggestionService : BackgroundService
             SuggestionStatus.Suggested => "🗳️",
             SuggestionStatus.Rejected => "❌",
             SuggestionStatus.Implemented => "✅",
+            SuggestionStatus.Accepted => "✅",
             _ => throw new ArgumentOutOfRangeException(nameof(suggestion), suggestion.Status, null)
         };
 
@@ -152,6 +155,7 @@ internal sealed class SuggestionService : BackgroundService
             SuggestionStatus.Suggested => configuration.SuggestedColor,
             SuggestionStatus.Rejected => configuration.RejectedColor,
             SuggestionStatus.Implemented => configuration.ImplementedColor,
+            SuggestionStatus.Accepted => configuration.AcceptedColor,
             _ => throw new ArgumentOutOfRangeException(nameof(suggestion), suggestion.Status, null)
         });
 
@@ -318,42 +322,6 @@ internal sealed class SuggestionService : BackgroundService
     }
 
     /// <summary>
-    ///     Marks a suggestion as implemented, and optionally updates the remarks for the implementation.
-    /// </summary>
-    /// <param name="suggestion">The suggestion to update.</param>
-    /// <param name="staffMember">The staff member who implemented the suggestion.</param>
-    /// <returns><see langword="true" /> if the status was updated; otherwise, <see langword="false" />.</returns>
-    /// <exception cref="ArgumentNullException">
-    ///     <para><paramref name="suggestion" /> is <see langword="null" />.</para>
-    ///     -or-
-    ///     <para><paramref name="staffMember" /> is <see langword="null" />.</para>
-    /// </exception>
-    public bool Implement(Suggestion suggestion, DiscordMember staffMember)
-    {
-        if (suggestion is null)
-        {
-            throw new ArgumentNullException(nameof(suggestion));
-        }
-
-        if (staffMember is null)
-        {
-            throw new ArgumentNullException(nameof(staffMember));
-        }
-
-        if (!SetStatus(suggestion, SuggestionStatus.Implemented, staffMember))
-        {
-            return false;
-        }
-
-        _logger.LogInformation("{StaffMember} marked suggestion {Id} as IMPLEMENTED", staffMember, suggestion.Id);
-
-        using SuggestionContext context = _contextFactory.CreateDbContext();
-        context.Suggestions.Update(suggestion);
-        context.SaveChanges();
-        return true;
-    }
-
-    /// <summary>
     ///     Posts a suggestion to the suggestion channel of the guild in which it was made.
     /// </summary>
     /// <param name="suggestion">The suggestion to post.</param>
@@ -394,42 +362,6 @@ internal sealed class SuggestionService : BackgroundService
         await message.CreateReactionAsync(DiscordEmoji.FromUnicode("👍")).ConfigureAwait(false);
         await message.CreateReactionAsync(DiscordEmoji.FromUnicode("👎")).ConfigureAwait(false);
         return message;
-    }
-
-    /// <summary>
-    ///     Marks a suggestion as rejected, and updates the reason for the rejection if one is provided.
-    /// </summary>
-    /// <param name="suggestion">The suggestion to update.</param>
-    /// <param name="staffMember">The staff member who rejected the suggestion.</param>
-    /// <returns><see langword="true" /> if the status was updated; otherwise, <see langword="false" />.</returns>
-    /// <exception cref="ArgumentNullException">
-    ///     <para><paramref name="suggestion" /> is <see langword="null" />.</para>
-    ///     -or-
-    ///     <para><paramref name="staffMember" /> is <see langword="null" />.</para>
-    /// </exception>
-    public bool Reject(Suggestion suggestion, DiscordMember staffMember)
-    {
-        if (suggestion is null)
-        {
-            throw new ArgumentNullException(nameof(suggestion));
-        }
-
-        if (staffMember is null)
-        {
-            throw new ArgumentNullException(nameof(staffMember));
-        }
-
-        if (!SetStatus(suggestion, SuggestionStatus.Rejected, staffMember))
-        {
-            return false;
-        }
-
-        _logger.LogInformation("{StaffMember} marked suggestion {Id} as REJECTED", staffMember, suggestion.Id);
-
-        using SuggestionContext context = _contextFactory.CreateDbContext();
-        context.Suggestions.Update(suggestion);
-        context.SaveChanges();
-        return true;
     }
 
     /// <summary>
@@ -502,6 +434,9 @@ internal sealed class SuggestionService : BackgroundService
         using SuggestionContext context = _contextFactory.CreateDbContext();
         context.Suggestions.Update(suggestion);
         context.SaveChanges();
+
+        _logger.LogInformation("{StaffMember} marked suggestion {Id} as {Status}", staffMember, suggestion.Id,
+            humanizedStatus);
 
         _ = UpdateSuggestionAsync(suggestion);
         return true;

@@ -7,5 +7,6 @@ public enum SuggestionStatus
 {
     Suggested,
     Rejected,
-    Implemented
+    Implemented,
+    Accepted
 }
