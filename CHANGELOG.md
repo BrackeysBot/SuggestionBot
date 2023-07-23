@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Suggestions now spawn a thread when they are posted.
+- Suggestions now spawn a thread when they are posted. These threads are closed when the suggestion is marked as
+implemented, accepted, or rejected.
 - Suggestion status update embed now shows link to suggestion.
 
 ## [1.4.0] - 2023-07-23

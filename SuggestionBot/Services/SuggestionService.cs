@@ -322,6 +322,32 @@ internal sealed class SuggestionService : BackgroundService
     }
 
     /// <summary>
+    ///     Gets the discussion thread for the specified suggestion.
+    /// </summary>
+    /// <param name="suggestion">The suggestion.</param>
+    /// <returns>The discussion thread for the suggestion, or <see langword="null" /> if it does not exist.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="suggestion" /> is <see langword="null" />.</exception>
+    public DiscordThreadChannel? GetThread(Suggestion suggestion)
+    {
+        if (suggestion is null)
+        {
+            throw new ArgumentNullException(nameof(suggestion));
+        }
+
+        if (suggestion.ThreadId == 0)
+        {
+            return null;
+        }
+
+        if (!_discordClient.Guilds.TryGetValue(suggestion.GuildId, out DiscordGuild? guild))
+        {
+            return null;
+        }
+
+        return guild.GetChannel(suggestion.ThreadId) as DiscordThreadChannel;
+    }
+
+    /// <summary>
     ///     Posts a suggestion to the suggestion channel of the guild in which it was made.
     /// </summary>
     /// <param name="suggestion">The suggestion to post.</param>
@@ -366,7 +392,8 @@ internal sealed class SuggestionService : BackgroundService
         {
             const AutoArchiveDuration archiveDuration = AutoArchiveDuration.Week;
             var threadName = $"Suggestion from {GetAuthor(suggestion).GetUsernameWithDiscriminator()}";
-            await message.CreateThreadAsync(threadName, archiveDuration).ConfigureAwait(false);
+            var thread = await message.CreateThreadAsync(threadName, archiveDuration).ConfigureAwait(false);
+            SetThread(suggestion, thread);
         }
 
         return message;
@@ -459,6 +486,41 @@ internal sealed class SuggestionService : BackgroundService
     }
 
     /// <summary>
+    ///     Sets the message of a suggestion.
+    /// </summary>
+    /// <param name="suggestion">The suggestion to update.</param>
+    /// <param name="thread">The discussion thread.</param>
+    /// <returns><see langword="true" /> if the message was updated; otherwise, <see langword="false" />.</returns>
+    /// <exception cref="ArgumentNullException">
+    ///     <para><paramref name="suggestion" /> is <see langword="null" />.</para>
+    ///     -or-
+    ///     <para><paramref name="thread" /> is <see langword="null" />.</para>
+    /// </exception>
+    public bool SetThread(Suggestion suggestion, DiscordThreadChannel thread)
+    {
+        if (suggestion is null)
+        {
+            throw new ArgumentNullException(nameof(suggestion));
+        }
+
+        if (thread is null)
+        {
+            throw new ArgumentNullException(nameof(thread));
+        }
+
+        if (suggestion.ThreadId == thread.Id)
+        {
+            return false;
+        }
+
+        suggestion.ThreadId = thread.Id;
+        using SuggestionContext context = _contextFactory.CreateDbContext();
+        context.Suggestions.Update(suggestion);
+        context.SaveChanges();
+        return true;
+    }
+
+    /// <summary>
     ///     Attempts to get a suggestion by its message ID.
     /// </summary>
     /// <param name="guildId">The ID of the guild in which the suggestion was made.</param>
@@ -547,6 +609,16 @@ internal sealed class SuggestionService : BackgroundService
         if (suggestion.Status != SuggestionStatus.Suggested)
         {
             await message.DeleteAllReactionsAsync().ConfigureAwait(false);
+
+            DiscordThreadChannel? thread = GetThread(suggestion);
+            if (thread is not null)
+            {
+                await thread.ModifyAsync(t =>
+                {
+                    t.IsArchived = true;
+                    t.Locked = true;
+                }).ConfigureAwait(false);
+            }
         }
     }
 
