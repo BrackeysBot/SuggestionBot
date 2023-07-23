@@ -1,5 +1,6 @@
 ﻿using DSharpPlus.Entities;
 using DSharpPlus.SlashCommands;
+using Humanizer;
 using SuggestionBot.AutocompleteProviders;
 using SuggestionBot.Data;
 
@@ -7,10 +8,13 @@ namespace SuggestionBot.Commands;
 
 internal sealed partial class SuggestionCommand
 {
-    [SlashCommand("reject", "Rejects a suggestion.", false)]
-    public async Task RejectAsync(InteractionContext context,
-        [Option("suggestion", "The suggestion to reject."), Autocomplete(typeof(SuggestionAutocompleteProvider))]
-        string query)
+    [SlashCommand("setstatus", "Sets a new status for a suggestion.", false)]
+    public async Task SetStatusAsync(InteractionContext context,
+        [Option("suggestion", "The suggestion whose status to change.")]
+        [Autocomplete(typeof(SuggestionAutocompleteProvider))]
+        string query,
+        [Option("status", "The new status of the suggestion.")]
+        SuggestionStatus status)
     {
         var response = new DiscordInteractionResponseBuilder();
 
@@ -23,17 +27,19 @@ internal sealed partial class SuggestionCommand
         }
 
         var embed = new DiscordEmbedBuilder();
-        if (_suggestionService.Reject(suggestion, context.Member))
+        string humanizedStatus = status.Humanize(LetterCasing.AllCaps);
+
+        if (_suggestionService.SetStatus(suggestion, status, context.Member))
         {
             embed.WithColor(DiscordColor.Orange);
-            embed.WithTitle("Suggestion Rejected");
-            embed.WithDescription($"The suggestion with the ID {suggestion.Id} has been marked as REJECTED.");
+            embed.WithTitle("Suggestion Status Changed");
+            embed.WithDescription($"The suggestion with the ID {suggestion.Id} has been marked as {humanizedStatus}.");
         }
         else
         {
             embed.WithColor(DiscordColor.Orange);
             embed.WithTitle("Suggestion Unchanged");
-            embed.WithDescription($"The suggestion with the ID {suggestion.Id} was already rejected. " +
+            embed.WithDescription($"The suggestion with the ID {suggestion.Id} was already {humanizedStatus}. " +
                                   "No changes were made.");
         }
 

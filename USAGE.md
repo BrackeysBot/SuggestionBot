@@ -38,21 +38,14 @@ Allow a user to send suggestions again.
 
 ## Implementing and Rejecting Suggestions
 
-### `/suggestion implement`
+### `/suggestion setstatus`
 
-Mark a suggestion as implemented.
+Change the status of a suggestion
 
-| Parameter  | Required | Type                     | Description                  |
-|:-----------|:---------|:-------------------------|:-----------------------------|
-| suggestion | ✅ Yes    | Suggestion or Message ID | The suggestion to implement. |
-
-### `/suggestion reject`
-
-Mark a suggestion as rejected.
-
-| Parameter  | Required | Type                     | Description               |
-|:-----------|:---------|:-------------------------|:--------------------------|
-| suggestion | ✅ Yes    | Suggestion or Message ID | The suggestion to reject. |
+| Parameter  | Required | Type                     | Description                            |
+|:-----------|:---------|:-------------------------|:---------------------------------------|
+| suggestion | ✅ Yes    | Suggestion or Message ID | The suggestion whose status to change. |
+| status     | ✅ Yes    | SuggestionStatus         | The new status of the suggestion.      |
 
 # Ephemeral responses
 

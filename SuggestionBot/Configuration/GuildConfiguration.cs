@@ -6,6 +6,12 @@
 public sealed class GuildConfiguration
 {
     /// <summary>
+    ///     Gets or sets the embed color for accepted suggestions.
+    /// </summary>
+    /// <value>The embed color for accepted suggestions.</value>
+    public int AcceptedColor { get; set; } = 0x00FF00;
+
+    /// <summary>
     ///     Gets or sets the cooldown for posting suggestions.
     /// </summary>
     /// <value>The cooldown for posting suggestions.</value>
