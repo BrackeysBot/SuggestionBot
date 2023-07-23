@@ -1,4 +1,4 @@
-﻿using DSharpPlus.Entities;
+using DSharpPlus.Entities;
 using DSharpPlus.SlashCommands;
 using Microsoft.Extensions.DependencyInjection;
 using SuggestionBot.Data;
@@ -14,10 +14,10 @@ internal sealed class SuggestionAutocompleteProvider : IAutocompleteProvider
         var suggestionService = context.Services.GetRequiredService<SuggestionService>();
         IEnumerable<Suggestion> suggestions = suggestionService.GetSuggestions(context.Guild, true);
 
-        return Task.FromResult(suggestions.OrderByDescending(i => i.Timestamp).Take(10).Select(infraction =>
+        return Task.FromResult(suggestions.OrderByDescending(i => i.Timestamp).Take(10).Select(suggestion =>
         {
-            string summary = GetSuggestionSummary(infraction);
-            return new DiscordAutoCompleteChoice(summary, infraction.Id);
+            string summary = GetSuggestionSummary(suggestion);
+            return new DiscordAutoCompleteChoice(summary, suggestion.Id);
         }));
     }
 
