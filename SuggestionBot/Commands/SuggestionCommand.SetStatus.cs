@@ -3,6 +3,7 @@ using DSharpPlus.SlashCommands;
 using Humanizer;
 using SuggestionBot.AutocompleteProviders;
 using SuggestionBot.Data;
+using X10D.DSharpPlus;
 
 namespace SuggestionBot.Commands;
 
@@ -27,6 +28,8 @@ internal sealed partial class SuggestionCommand
         }
 
         var embed = new DiscordEmbedBuilder();
+        embed.AddField("View Suggestion", _suggestionService.GetSuggestionLink(suggestion), true);
+
         string humanizedStatus = status.Humanize(LetterCasing.AllCaps);
 
         if (_suggestionService.SetStatus(suggestion, status, context.Member))
