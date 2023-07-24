@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2023-07-24
+
+### Added
+
+- Suggestions now spawn a thread when they are posted. These threads are closed when the suggestion is marked as
+implemented, accepted, or rejected.
+- Suggestion status update embed now shows link to suggestion.
+- Added autocomplete to `/suggestion view`.
+
+### Fixed
+- Fixed autocomplete for `/suggestion setstatus`.
+
 ## [1.4.0] - 2023-07-23
 
 ### Added
@@ -74,6 +86,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial release.
 
+[1.5.0]: https://github.com/BrackeysBot/SuggestionBot/releases/tag/v1.5.0
+[1.4.0]: https://github.com/BrackeysBot/SuggestionBot/releases/tag/v1.4.0
+[1.3.2]: https://github.com/BrackeysBot/SuggestionBot/releases/tag/v1.3.2
 [1.3.1]: https://github.com/BrackeysBot/SuggestionBot/releases/tag/v1.3.1
 [1.3.0]: https://github.com/BrackeysBot/SuggestionBot/releases/tag/v1.3.0
 [1.2.1]: https://github.com/BrackeysBot/SuggestionBot/releases/tag/v1.2.1

@@ -47,6 +47,12 @@ public sealed class Suggestion
     public SuggestionStatus Status { get; set; } = SuggestionStatus.Suggested;
 
     /// <summary>
+    ///     Gets or sets the ID of the suggestion's discussion thread.
+    /// </summary>
+    /// <value>The thread ID.</value>
+    public ulong ThreadId { get; set; }
+
+    /// <summary>
     ///     Gets or sets the date and time at which the suggestion was made.
     /// </summary>
     /// <value>The suggestion timestamp.</value>

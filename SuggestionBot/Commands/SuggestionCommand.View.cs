@@ -1,5 +1,6 @@
 ﻿using DSharpPlus.Entities;
 using DSharpPlus.SlashCommands;
+using SuggestionBot.AutocompleteProviders;
 using SuggestionBot.Data;
 
 namespace SuggestionBot.Commands;
@@ -9,16 +10,17 @@ internal sealed partial class SuggestionCommand
     [SlashCommand("view", "Views a suggestion.", false)]
     public async Task ViewAsync(InteractionContext context,
         [Option("id", "The ID of the suggestion to view.")]
-        string idRaw)
+        [Autocomplete(typeof(SuggestionAutocompleteProvider))]
+        string query)
     {
         Suggestion? suggestion = null;
 
         ulong guildId = context.Guild.Id;
-        if (ulong.TryParse(idRaw, out ulong messageId) &&
+        if (ulong.TryParse(query, out ulong messageId) &&
             _suggestionService.TryGetSuggestion(guildId, messageId, out suggestion))
         {
         }
-        else if (long.TryParse(idRaw, out long id) && _suggestionService.TryGetSuggestion(guildId, id, out suggestion))
+        else if (long.TryParse(query, out long id) && _suggestionService.TryGetSuggestion(guildId, id, out suggestion))
         {
         }
 
@@ -26,7 +28,7 @@ internal sealed partial class SuggestionCommand
 
         if (suggestion is null)
         {
-            builder.WithContent($"The suggestion with ID {idRaw} does not exist.");
+            builder.WithContent($"The suggestion with ID {query} does not exist.");
             builder.AsEphemeral();
             await context.CreateResponseAsync(ResponseType, builder).ConfigureAwait(false);
             return;

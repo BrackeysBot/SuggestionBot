@@ -24,6 +24,12 @@ public sealed class GuildConfiguration
     public ulong[] CooldownExemptRoles { get; set; } = Array.Empty<ulong>();
 
     /// <summary>
+    ///     Gets or sets a value indicating whether to create a thread for suggestion discussion.
+    /// </summary>
+    /// <value><see langword="true" /> if a thread should be created; otherwise, <see langword="false" />.</value>
+    public bool CreateThreadForSuggestion { get; set; } = true;
+
+    /// <summary>
     ///     Gets or sets the embed color for implemented suggestions.
     /// </summary>
     /// <value>The embed color for implemented suggestions.</value>
