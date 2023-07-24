@@ -64,37 +64,8 @@ internal sealed class SuggestionService : BackgroundService
             return new DiscordEmbedBuilder();
         }
 
-        if (!_configurationService.TryGetGuildConfiguration(guild, out GuildConfiguration? configuration))
-        {
-            configuration = new GuildConfiguration();
-        }
-
-        string emoji = suggestion.Status switch
-        {
-            SuggestionStatus.Suggested => "🗳️",
-            SuggestionStatus.Rejected => "❌",
-            SuggestionStatus.Implemented => "✅",
-            SuggestionStatus.Accepted => "✅",
-            _ => throw new ArgumentOutOfRangeException(nameof(suggestion), suggestion.Status, null)
-        };
-
         DiscordUser author = GetAuthor(suggestion);
-        var embed = new DiscordEmbedBuilder();
-        string authorName = author.GetUsernameWithDiscriminator();
-        embed.WithAuthor($"Suggestion from {authorName}", iconUrl: author.GetAvatarUrl(ImageFormat.Png));
-        embed.WithThumbnail(guild.GetIconUrl(ImageFormat.Png));
-        embed.WithDescription(suggestion.Content);
-        embed.WithFooter($"Suggestion {suggestion.Id}");
-        embed.WithColor(suggestion.Status switch
-        {
-            SuggestionStatus.Suggested => configuration.SuggestedColor,
-            SuggestionStatus.Rejected => configuration.RejectedColor,
-            SuggestionStatus.Implemented => configuration.ImplementedColor,
-            SuggestionStatus.Accepted => configuration.AcceptedColor,
-            _ => throw new ArgumentOutOfRangeException(nameof(suggestion), suggestion.Status, null)
-        });
-
-        embed.AddField("Status", $"{emoji} **{suggestion.Status.Humanize(LetterCasing.AllCaps)}**", true);
+        DiscordEmbedBuilder embed = CreateDefaultEmbed(suggestion, guild);
         embed.AddField("Author", author.Mention, true);
         embed.AddField("Submitted", Formatter.Timestamp(suggestion.Timestamp), true);
         embed.AddField("View Suggestion", GetSuggestionLink(suggestion), true);
@@ -138,39 +109,7 @@ internal sealed class SuggestionService : BackgroundService
             return new DiscordEmbedBuilder();
         }
 
-        if (!_configurationService.TryGetGuildConfiguration(guild, out GuildConfiguration? configuration))
-        {
-            configuration = new GuildConfiguration();
-        }
-
-        string emoji = suggestion.Status switch
-        {
-            SuggestionStatus.Suggested => "🗳️",
-            SuggestionStatus.Rejected => "❌",
-            SuggestionStatus.Implemented => "✅",
-            SuggestionStatus.Accepted => "✅",
-            _ => throw new ArgumentOutOfRangeException(nameof(suggestion), suggestion.Status, null)
-        };
-
-        DiscordUser author = GetAuthor(suggestion);
-        var embed = new DiscordEmbedBuilder();
-        string authorName = author.GetUsernameWithDiscriminator();
-        embed.WithAuthor($"Suggestion from {authorName}", iconUrl: author.GetAvatarUrl(ImageFormat.Png));
-        embed.WithThumbnail(guild.GetIconUrl(ImageFormat.Png));
-        embed.WithDescription(suggestion.Content);
-        embed.WithFooter($"Suggestion {suggestion.Id}");
-        embed.WithTimestamp(suggestion.Timestamp);
-        embed.WithColor(suggestion.Status switch
-        {
-            SuggestionStatus.Suggested => configuration.SuggestedColor,
-            SuggestionStatus.Rejected => configuration.RejectedColor,
-            SuggestionStatus.Implemented => configuration.ImplementedColor,
-            SuggestionStatus.Accepted => configuration.AcceptedColor,
-            _ => throw new ArgumentOutOfRangeException(nameof(suggestion), suggestion.Status, null)
-        });
-
-        embed.AddField("Status", $"{emoji} **{suggestion.Status.Humanize(LetterCasing.AllCaps)}**", true);
-
+        DiscordEmbedBuilder embed = CreateDefaultEmbed(suggestion, guild);
         if (!string.IsNullOrWhiteSpace(suggestion.Remarks))
         {
             embed.AddField("Staff Remarks", suggestion.Remarks);
@@ -693,6 +632,48 @@ internal sealed class SuggestionService : BackgroundService
         _discordClient.GuildAvailable += OnGuildAvailable;
         Load();
         return Task.CompletedTask;
+    }
+
+    private DiscordEmbedBuilder CreateDefaultEmbed(Suggestion suggestion, DiscordGuild guild)
+    {
+        if (!_configurationService.TryGetGuildConfiguration(guild, out GuildConfiguration? configuration))
+        {
+            configuration = new GuildConfiguration();
+        }
+
+        string emoji = suggestion.Status switch
+        {
+            SuggestionStatus.Suggested => "🗳️",
+            SuggestionStatus.Rejected => "❌",
+            SuggestionStatus.Implemented => "✅",
+            SuggestionStatus.Accepted => "✅",
+            SuggestionStatus.Duplicate => "🔁",
+            SuggestionStatus.AlreadyImplemented => "✅",
+            SuggestionStatus.AlreadyPlanned => "📅",
+            _ => throw new ArgumentOutOfRangeException(nameof(suggestion), suggestion.Status, null)
+        };
+
+        DiscordUser author = GetAuthor(suggestion);
+        var embed = new DiscordEmbedBuilder();
+        string authorName = author.GetUsernameWithDiscriminator();
+        embed.WithAuthor($"Suggestion from {authorName}", iconUrl: author.GetAvatarUrl(ImageFormat.Png));
+        embed.WithThumbnail(guild.GetIconUrl(ImageFormat.Png));
+        embed.WithDescription(suggestion.Content);
+        embed.WithFooter($"Suggestion {suggestion.Id}");
+        embed.WithTimestamp(suggestion.Timestamp);
+        embed.WithColor(suggestion.Status switch
+        {
+            SuggestionStatus.Suggested => configuration.SuggestedColor,
+            SuggestionStatus.Rejected => configuration.RejectedColor,
+            SuggestionStatus.Implemented or SuggestionStatus.AlreadyImplemented => configuration.ImplementedColor,
+            SuggestionStatus.Accepted => configuration.AcceptedColor,
+            SuggestionStatus.Duplicate => configuration.DuplicateColor,
+            SuggestionStatus.AlreadyPlanned => configuration.PlannedColor,
+            _ => throw new ArgumentOutOfRangeException(nameof(suggestion), suggestion.Status, null)
+        });
+
+        embed.AddField("Status", $"{emoji} **{suggestion.Status.Humanize(LetterCasing.AllCaps)}**", true);
+        return embed;
     }
 
     private Task OnGuildAvailable(DiscordClient sender, GuildCreateEventArgs args)

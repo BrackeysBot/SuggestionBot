@@ -115,6 +115,24 @@ internal sealed class MailmanService
                 embed.WithDescription(PrivateMessages.ImplementedDescription.FormatSmart(new { user = author, guild }));
                 break;
 
+            case SuggestionStatus.Duplicate:
+                embed.WithColor(configuration.DuplicateColor);
+                embed.WithTitle("Suggestion Closed (Duplicate)");
+                embed.WithDescription(PrivateMessages.DuplicateDescription.FormatSmart(new { user = author, guild }));
+                break;
+
+            case SuggestionStatus.AlreadyImplemented:
+                embed.WithColor(configuration.ImplementedColor);
+                embed.WithTitle("Suggestion Closed (Already Implemented)");
+                embed.WithDescription(PrivateMessages.DuplicateDescription.FormatSmart(new { user = author, guild }));
+                break;
+
+            case SuggestionStatus.AlreadyPlanned:
+                embed.WithColor(configuration.PlannedColor);
+                embed.WithTitle("Suggestion Closed (Already Planned)");
+                embed.WithDescription(PrivateMessages.PlannedDescription.FormatSmart(new { user = author, guild }));
+                break;
+
             default:
                 return false;
         }

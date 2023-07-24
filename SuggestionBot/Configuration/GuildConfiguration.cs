@@ -33,6 +33,12 @@ public sealed class GuildConfiguration
     ///     Gets or sets the embed color for implemented suggestions.
     /// </summary>
     /// <value>The embed color for implemented suggestions.</value>
+    public int DuplicateColor { get; set; } = 0xA0A0A0;
+
+    /// <summary>
+    ///     Gets or sets the embed color for implemented suggestions.
+    /// </summary>
+    /// <value>The embed color for implemented suggestions.</value>
     public int ImplementedColor { get; set; } = 0x191970;
 
     /// <summary>
@@ -40,6 +46,12 @@ public sealed class GuildConfiguration
     /// </summary>
     /// <value>The log channel ID.</value>
     public ulong LogChannel { get; set; }
+
+    /// <summary>
+    ///     Gets or sets the embed color for rejected suggestions.
+    /// </summary>
+    /// <value>The embed color for rejected suggestions.</value>
+    public int PlannedColor { get; set; } = 0x6495ED;
 
     /// <summary>
     ///     Gets or sets the embed color for rejected suggestions.
