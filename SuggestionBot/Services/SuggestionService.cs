@@ -393,8 +393,17 @@ internal sealed class SuggestionService : BackgroundService
         if (configuration.CreateThreadForSuggestion)
         {
             const AutoArchiveDuration archiveDuration = AutoArchiveDuration.Week;
-            var threadName = $"Suggestion from {GetAuthor(suggestion).GetUsernameWithDiscriminator()}";
+
+            DiscordUser author = GetAuthor(suggestion);
+            var threadName = $"Suggestion from {author.GetUsernameWithDiscriminator()}";
             var thread = await message.CreateThreadAsync(threadName, archiveDuration).ConfigureAwait(false);
+
+            DiscordMember? member = await author.GetAsMemberOfAsync(guild);
+            if (member is not null)
+            {
+                await thread.AddThreadMemberAsync(member).ConfigureAwait(false);
+            }
+
             SetThread(suggestion, thread);
         }
 
