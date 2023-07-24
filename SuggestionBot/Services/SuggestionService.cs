@@ -276,10 +276,9 @@ internal sealed class SuggestionService : BackgroundService
     ///     Gets the suggestions for the specified guild.
     /// </summary>
     /// <param name="guild">The guild.</param>
-    /// <param name="onlyReturnOpen">Whether to only return open suggestions.</param>
     /// <returns>A read-only view of the suggestions.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="guild" /> is <see langword="null" />.</exception>
-    public IReadOnlyList<Suggestion> GetSuggestions(DiscordGuild guild, bool onlyReturnOpen = false)
+    public IReadOnlyList<Suggestion> GetSuggestions(DiscordGuild guild)
     {
         if (guild is null)
         {
@@ -291,11 +290,6 @@ internal sealed class SuggestionService : BackgroundService
             using SuggestionContext context = _contextFactory.CreateDbContext();
             suggestions = context.Suggestions.Where(s => s.GuildId == guild.Id).ToList();
             _suggestions.TryAdd(guild.Id, suggestions);
-        }
-
-        if (onlyReturnOpen)
-        {
-            suggestions = suggestions.Where(s => s.Status == SuggestionStatus.Suggested).ToList();
         }
 
         return suggestions.AsReadOnly();
