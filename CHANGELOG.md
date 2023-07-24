@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Suggestions now spawn a thread when they are posted. These threads are closed when the suggestion is marked as
 implemented, accepted, or rejected.
 - Suggestion status update embed now shows link to suggestion.
+- Added autocomplete to `/suggestion view`.
+
+### Fixed
+- Fixed autocomplete for `/suggestion setstatus`.
 
 ## [1.4.0] - 2023-07-23
 
