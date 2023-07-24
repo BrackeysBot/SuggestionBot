@@ -1,4 +1,4 @@
-using DSharpPlus;
+﻿using DSharpPlus;
 using DSharpPlus.Entities;
 using Humanizer;
 using SmartFormat;
@@ -74,6 +74,11 @@ internal sealed class MailmanService
             embed.AddField("Staff Remarks", suggestion.Remarks);
         }
 
+        if (suggestion.Status != SuggestionStatus.Removed)
+        {
+            embed.AddField("View Suggestion", suggestionLink);
+        }
+
         await member.SendMessageAsync(embed).ConfigureAwait(false);
     }
 
@@ -86,6 +91,12 @@ internal sealed class MailmanService
 
         switch (suggestion.Status)
         {
+            case SuggestionStatus.Removed:
+                embed.WithColor(configuration.RemovedColor);
+                embed.WithTitle("Suggestion Removed");
+                embed.WithDescription(PrivateMessages.RemovedDescription.FormatSmart(new { user = author, guild }));
+                break;
+
             case SuggestionStatus.Rejected:
                 embed.WithColor(configuration.RejectedColor);
                 embed.WithTitle("Suggestion Rejected");

@@ -48,6 +48,12 @@ public sealed class GuildConfiguration
     public int RejectedColor { get; set; } = 0xFF0000;
 
     /// <summary>
+    ///     Gets or sets the embed color for removed suggestions.
+    /// </summary>
+    /// <value>The embed color for removed suggestions.</value>
+    public int RemovedColor { get; set; } = 0xFF0000;
+
+    /// <summary>
     ///     Gets or sets the channel ID for posting suggestions.
     /// </summary>
     /// <value>The channel ID for posting suggestions.</value>

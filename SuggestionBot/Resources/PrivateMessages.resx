@@ -24,6 +24,13 @@
         </value>
     </resheader>
 
+    <data name="RemovedDescription" xml:space="preserve">
+        <value>{user.Mention}, your suggestion in **{guild.Name}** has been removed by staff because it was inappropriate or violated our server rules.
+Repeated abuse will result in you losing access to the channel.
+
+If you have any further questions, please reach us by sending a DM to ModMail.</value>
+    </data>
+
     <data name="RejectedDescription" xml:space="preserve">
         <value>Hi {user.Mention}. Unfortunately, your suggestion in **{guild.Name}** has been rejected by staff at this time.
 Keep in mind that while a suggestion may be popular, there is no guarantee that it will be accepted. Nevertheless, we thank you for your contribution and feedback.

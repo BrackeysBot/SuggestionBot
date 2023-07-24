@@ -94,5 +94,17 @@ namespace SuggestionBot.Resources {
                 return ResourceManager.GetString("RejectedDescription", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {user.Mention}, your suggestion in **{guild.Name}** has been removed by staff because it was inappropriate or violated our server rules.
+        ///Repeated abuse will result in you losing access to the channel.
+        ///
+        ///If you have any further questions, please reach us by sending a DM to ModMail..
+        /// </summary>
+        internal static string RemovedDescription {
+            get {
+                return ResourceManager.GetString("RemovedDescription", resourceCulture);
+            }
+        }
     }
 }

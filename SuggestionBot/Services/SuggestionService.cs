@@ -99,7 +99,7 @@ internal sealed class SuggestionService : BackgroundService
         embed.AddField("Submitted", Formatter.Timestamp(suggestion.Timestamp), true);
         embed.AddField("View Suggestion", GetSuggestionLink(suggestion), true);
 
-        if (suggestion.ThreadId != 0)
+        if (suggestion.ThreadId != 0 && suggestion.Status != SuggestionStatus.Removed)
         {
             embed.AddField("View Discussion", MentionUtility.MentionChannel(suggestion.ThreadId), true);
         }
@@ -503,6 +503,7 @@ internal sealed class SuggestionService : BackgroundService
             SuggestionStatus.Rejected => configuration.RejectedColor,
             SuggestionStatus.Implemented => configuration.ImplementedColor,
             SuggestionStatus.Accepted => configuration.AcceptedColor,
+            SuggestionStatus.Removed => configuration.RemovedColor,
             _ => DiscordColor.CornflowerBlue
         });
         embed.WithTitle("Suggestion Status Updated");
@@ -510,7 +511,10 @@ internal sealed class SuggestionService : BackgroundService
         embed.AddField("Old Status", oldHumanizedStatus, true);
         embed.AddField("New Status", humanizedStatus, true);
         embed.AddField("Staff Member", staffMember.Mention, true);
-        embed.AddField("View Suggestion", GetSuggestionLink(suggestion), true);
+        if (status != SuggestionStatus.Removed)
+        {
+            embed.AddField("View Suggestion", GetSuggestionLink(suggestion), true);
+        }
 
         if (!string.IsNullOrWhiteSpace(remarks))
         {
@@ -649,6 +653,18 @@ internal sealed class SuggestionService : BackgroundService
         DiscordMessage? message = await channel.GetMessageAsync(suggestion.MessageId).ConfigureAwait(false);
         if (message is null)
         {
+            return;
+        }
+
+        if (suggestion.Status == SuggestionStatus.Removed)
+        {
+            DiscordThreadChannel? thread = GetThread(suggestion);
+            if (thread is not null)
+            {
+                await thread.DeleteAsync().ConfigureAwait(false);
+            }
+
+            await message.DeleteAsync();
             return;
         }
 

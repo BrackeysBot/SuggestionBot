@@ -35,6 +35,11 @@ internal sealed class SuggestionAutocompleteProvider : IAutocompleteProvider
         for (var index = 0; index < count; index++)
         {
             Suggestion suggestion = suggestions[index];
+            if (suggestion.Status == SuggestionStatus.Removed)
+            {
+                continue;
+            }
+
             DiscordUser author = suggestionService.GetAuthor(suggestion);
             string[] contentWords = suggestion.Content.Split();
 
