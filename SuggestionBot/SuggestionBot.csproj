@@ -40,6 +40,7 @@
         <PackageReference Include="Microsoft.Extensions.Hosting" Version="7.0.1"/>
         <PackageReference Include="NLog" Version="5.2.2"/>
         <PackageReference Include="NLog.Extensions.Logging" Version="5.3.2"/>
+        <PackageReference Include="SmartFormat" Version="3.2.1"/>
         <PackageReference Include="X10D" Version="3.2.2"/>
         <PackageReference Include="X10D.DSharpPlus" Version="3.2.2"/>
         <PackageReference Include="X10D.Hosting" Version="3.2.2"/>
@@ -52,6 +53,21 @@
         <Content Include="..\Dockerfile">
             <Link>Dockerfile</Link>
         </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+        <EmbeddedResource Update="Resources\PrivateMessages.resx">
+            <Generator>ResXFileCodeGenerator</Generator>
+            <LastGenOutput>PrivateMessages.Designer.cs</LastGenOutput>
+        </EmbeddedResource>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Update="Resources\PrivateMessages.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>PrivateMessages.resx</DependentUpon>
+        </Compile>
     </ItemGroup>
 
 </Project>

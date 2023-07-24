@@ -99,6 +99,11 @@ internal sealed class SuggestionService : BackgroundService
         embed.AddField("Submitted", Formatter.Timestamp(suggestion.Timestamp), true);
         embed.AddField("View Suggestion", GetSuggestionLink(suggestion), true);
 
+        if (suggestion.ThreadId != 0)
+        {
+            embed.AddField("View Discussion", MentionUtility.MentionChannel(suggestion.ThreadId), true);
+        }
+
         if (suggestion.StaffMemberId.HasValue)
         {
             embed.AddField("Approver", MentionUtility.MentionUser(suggestion.StaffMemberId.Value), true);
@@ -486,8 +491,20 @@ internal sealed class SuggestionService : BackgroundService
         string humanizedStatus = status.Humanize(LetterCasing.AllCaps);
         string oldHumanizedStatus = suggestion.Status.Humanize(LetterCasing.AllCaps);
 
+        if (!_configurationService.TryGetGuildConfiguration(suggestion.GuildId, out GuildConfiguration? configuration))
+        {
+            configuration = new GuildConfiguration();
+        }
+
         var embed = new DiscordEmbedBuilder();
-        embed.WithColor(DiscordColor.CornflowerBlue);
+        embed.WithColor(status switch
+        {
+            SuggestionStatus.Suggested => configuration.SuggestedColor,
+            SuggestionStatus.Rejected => configuration.RejectedColor,
+            SuggestionStatus.Implemented => configuration.ImplementedColor,
+            SuggestionStatus.Accepted => configuration.AcceptedColor,
+            _ => DiscordColor.CornflowerBlue
+        });
         embed.WithTitle("Suggestion Status Updated");
         embed.WithDescription($"The status of suggestion {suggestion.Id} has been updated to **{humanizedStatus}**.");
         embed.AddField("Old Status", oldHumanizedStatus, true);

@@ -1,4 +1,4 @@
-﻿using DSharpPlus.Entities;
+using DSharpPlus.Entities;
 using DSharpPlus.SlashCommands;
 using Humanizer;
 using SuggestionBot.AutocompleteProviders;
@@ -39,6 +39,12 @@ internal sealed partial class SuggestionCommand
             embed.WithColor(DiscordColor.Orange);
             embed.WithTitle("Suggestion Status Changed");
             embed.WithDescription($"The suggestion with the ID {suggestion.Id} has been marked as {humanizedStatus}.");
+            if (!string.IsNullOrWhiteSpace(remarks))
+            {
+                embed.AddField("Staff Remarks", remarks);
+            }
+
+            await _mailmanService.SendSuggestionAsync(suggestion).ConfigureAwait(false);
         }
         else
         {
