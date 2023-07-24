@@ -15,7 +15,9 @@ internal sealed partial class SuggestionCommand
         [Autocomplete(typeof(SuggestionAutocompleteProvider))]
         string query,
         [Option("status", "The new status of the suggestion.")]
-        SuggestionStatus status)
+        SuggestionStatus status,
+        [Option("remarks", "Additional remarks about the suggestion.")]
+        string? remarks = null)
     {
         var response = new DiscordInteractionResponseBuilder();
 
@@ -32,7 +34,7 @@ internal sealed partial class SuggestionCommand
 
         string humanizedStatus = status.Humanize(LetterCasing.AllCaps);
 
-        if (_suggestionService.SetStatus(suggestion, status, context.Member))
+        if (_suggestionService.SetStatus(suggestion, status, context.Member, remarks))
         {
             embed.WithColor(DiscordColor.Orange);
             embed.WithTitle("Suggestion Status Changed");

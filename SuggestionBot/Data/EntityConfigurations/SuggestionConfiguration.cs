@@ -22,5 +22,6 @@ internal sealed class SuggestionConfiguration : IEntityTypeConfiguration<Suggest
         builder.Property(e => e.Timestamp).IsRequired();
         builder.Property(e => e.ThreadId);
         builder.Property(e => e.StaffMemberId);
+        builder.Property(e => e.Remarks);
     }
 }

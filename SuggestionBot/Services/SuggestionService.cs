@@ -104,6 +104,11 @@ internal sealed class SuggestionService : BackgroundService
             embed.AddField("Approver", MentionUtility.MentionUser(suggestion.StaffMemberId.Value), true);
         }
 
+        if (!string.IsNullOrWhiteSpace(suggestion.Remarks))
+        {
+            embed.AddField("Staff Remarks", suggestion.Remarks);
+        }
+
         return embed;
     }
 
@@ -160,6 +165,11 @@ internal sealed class SuggestionService : BackgroundService
         });
 
         embed.AddField("Status", $"{emoji} **{suggestion.Status.Humanize(LetterCasing.AllCaps)}**", true);
+
+        if (!string.IsNullOrWhiteSpace(suggestion.Remarks))
+        {
+            embed.AddField("Staff Remarks", suggestion.Remarks);
+        }
 
         return embed;
     }
@@ -451,13 +461,17 @@ internal sealed class SuggestionService : BackgroundService
     /// <param name="suggestion">The suggestion to update.</param>
     /// <param name="status">The new status of the suggestion.</param>
     /// <param name="staffMember">The staff member who updated the status.</param>
+    /// <param name="remarks">Additional remarks about the suggestion.</param>
     /// <returns><see langword="true" /> if the status was updated; otherwise, <see langword="false" />.</returns>
     /// <exception cref="ArgumentNullException">
     ///     <para><paramref name="suggestion" /> is <see langword="null" />.</para>
     ///     -or-
     ///     <para><paramref name="staffMember" /> is <see langword="null" />.</para>
     /// </exception>
-    public bool SetStatus(Suggestion suggestion, SuggestionStatus status, DiscordMember staffMember)
+    public bool SetStatus(Suggestion suggestion,
+        SuggestionStatus status,
+        DiscordMember staffMember,
+        string? remarks = null)
     {
         if (suggestion is null)
         {
@@ -484,6 +498,7 @@ internal sealed class SuggestionService : BackgroundService
 
         suggestion.Status = status;
         suggestion.StaffMemberId = staffMember.Id;
+        suggestion.Remarks = remarks;
 
         using SuggestionContext context = _contextFactory.CreateDbContext();
         context.Suggestions.Update(suggestion);
