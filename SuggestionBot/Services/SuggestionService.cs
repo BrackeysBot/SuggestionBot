@@ -494,6 +494,12 @@ internal sealed class SuggestionService : BackgroundService
         embed.AddField("New Status", humanizedStatus, true);
         embed.AddField("Staff Member", staffMember.Mention, true);
         embed.AddField("View Suggestion", GetSuggestionLink(suggestion), true);
+
+        if (!string.IsNullOrWhiteSpace(remarks))
+        {
+            embed.AddField("Staff Remarks", remarks);
+        }
+
         _ = _logService.LogAsync(suggestion.GuildId, embed);
 
         suggestion.Status = status;
