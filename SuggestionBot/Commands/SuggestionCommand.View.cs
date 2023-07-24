@@ -13,29 +13,17 @@ internal sealed partial class SuggestionCommand
         [Autocomplete(typeof(SuggestionAutocompleteProvider))]
         string query)
     {
-        Suggestion? suggestion = null;
-
-        ulong guildId = context.Guild.Id;
-        if (ulong.TryParse(query, out ulong messageId) &&
-            _suggestionService.TryGetSuggestion(guildId, messageId, out suggestion))
+        var response = new DiscordInteractionResponseBuilder();
+        if (!TryGetSuggestion(context.Guild, query, out Suggestion? suggestion))
         {
-        }
-        else if (long.TryParse(query, out long id) && _suggestionService.TryGetSuggestion(guildId, id, out suggestion))
-        {
-        }
-
-        var builder = new DiscordInteractionResponseBuilder();
-
-        if (suggestion is null)
-        {
-            builder.WithContent($"The suggestion with ID {query} does not exist.");
-            builder.AsEphemeral();
-            await context.CreateResponseAsync(ResponseType, builder).ConfigureAwait(false);
+            response.AsEphemeral();
+            response.AddEmbed(CreateNotFoundEmbed(query));
+            await context.CreateResponseAsync(ResponseType, response).ConfigureAwait(false);
             return;
         }
 
         DiscordEmbed embed = _suggestionService.CreatePrivateEmbed(suggestion);
-        builder.AddEmbed(embed);
-        await context.CreateResponseAsync(ResponseType, builder).ConfigureAwait(false);
+        response.AddEmbed(embed);
+        await context.CreateResponseAsync(ResponseType, response).ConfigureAwait(false);
     }
 }

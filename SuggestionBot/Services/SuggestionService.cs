@@ -99,9 +99,19 @@ internal sealed class SuggestionService : BackgroundService
         embed.AddField("Submitted", Formatter.Timestamp(suggestion.Timestamp), true);
         embed.AddField("View Suggestion", GetSuggestionLink(suggestion), true);
 
+        if (suggestion.ThreadId != 0 && suggestion.Status != SuggestionStatus.Removed)
+        {
+            embed.AddField("View Discussion", MentionUtility.MentionChannel(suggestion.ThreadId), true);
+        }
+
         if (suggestion.StaffMemberId.HasValue)
         {
             embed.AddField("Approver", MentionUtility.MentionUser(suggestion.StaffMemberId.Value), true);
+        }
+
+        if (!string.IsNullOrWhiteSpace(suggestion.Remarks))
+        {
+            embed.AddField("Staff Remarks", suggestion.Remarks);
         }
 
         return embed;
@@ -160,6 +170,11 @@ internal sealed class SuggestionService : BackgroundService
         });
 
         embed.AddField("Status", $"{emoji} **{suggestion.Status.Humanize(LetterCasing.AllCaps)}**", true);
+
+        if (!string.IsNullOrWhiteSpace(suggestion.Remarks))
+        {
+            embed.AddField("Staff Remarks", suggestion.Remarks);
+        }
 
         return embed;
     }
@@ -451,13 +466,17 @@ internal sealed class SuggestionService : BackgroundService
     /// <param name="suggestion">The suggestion to update.</param>
     /// <param name="status">The new status of the suggestion.</param>
     /// <param name="staffMember">The staff member who updated the status.</param>
+    /// <param name="remarks">Additional remarks about the suggestion.</param>
     /// <returns><see langword="true" /> if the status was updated; otherwise, <see langword="false" />.</returns>
     /// <exception cref="ArgumentNullException">
     ///     <para><paramref name="suggestion" /> is <see langword="null" />.</para>
     ///     -or-
     ///     <para><paramref name="staffMember" /> is <see langword="null" />.</para>
     /// </exception>
-    public bool SetStatus(Suggestion suggestion, SuggestionStatus status, DiscordMember staffMember)
+    public bool SetStatus(Suggestion suggestion,
+        SuggestionStatus status,
+        DiscordMember staffMember,
+        string? remarks = null)
     {
         if (suggestion is null)
         {
@@ -472,18 +491,41 @@ internal sealed class SuggestionService : BackgroundService
         string humanizedStatus = status.Humanize(LetterCasing.AllCaps);
         string oldHumanizedStatus = suggestion.Status.Humanize(LetterCasing.AllCaps);
 
+        if (!_configurationService.TryGetGuildConfiguration(suggestion.GuildId, out GuildConfiguration? configuration))
+        {
+            configuration = new GuildConfiguration();
+        }
+
         var embed = new DiscordEmbedBuilder();
-        embed.WithColor(DiscordColor.CornflowerBlue);
+        embed.WithColor(status switch
+        {
+            SuggestionStatus.Suggested => configuration.SuggestedColor,
+            SuggestionStatus.Rejected => configuration.RejectedColor,
+            SuggestionStatus.Implemented => configuration.ImplementedColor,
+            SuggestionStatus.Accepted => configuration.AcceptedColor,
+            SuggestionStatus.Removed => configuration.RemovedColor,
+            _ => DiscordColor.CornflowerBlue
+        });
         embed.WithTitle("Suggestion Status Updated");
         embed.WithDescription($"The status of suggestion {suggestion.Id} has been updated to **{humanizedStatus}**.");
         embed.AddField("Old Status", oldHumanizedStatus, true);
         embed.AddField("New Status", humanizedStatus, true);
         embed.AddField("Staff Member", staffMember.Mention, true);
-        embed.AddField("View Suggestion", GetSuggestionLink(suggestion), true);
+        if (status != SuggestionStatus.Removed)
+        {
+            embed.AddField("View Suggestion", GetSuggestionLink(suggestion), true);
+        }
+
+        if (!string.IsNullOrWhiteSpace(remarks))
+        {
+            embed.AddField("Staff Remarks", remarks);
+        }
+
         _ = _logService.LogAsync(suggestion.GuildId, embed);
 
         suggestion.Status = status;
         suggestion.StaffMemberId = staffMember.Id;
+        suggestion.Remarks = remarks;
 
         using SuggestionContext context = _contextFactory.CreateDbContext();
         context.Suggestions.Update(suggestion);
@@ -611,6 +653,18 @@ internal sealed class SuggestionService : BackgroundService
         DiscordMessage? message = await channel.GetMessageAsync(suggestion.MessageId).ConfigureAwait(false);
         if (message is null)
         {
+            return;
+        }
+
+        if (suggestion.Status == SuggestionStatus.Removed)
+        {
+            DiscordThreadChannel? thread = GetThread(suggestion);
+            if (thread is not null)
+            {
+                await thread.DeleteAsync().ConfigureAwait(false);
+            }
+
+            await message.DeleteAsync();
             return;
         }
 

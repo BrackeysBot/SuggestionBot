@@ -35,6 +35,12 @@ public sealed class Suggestion
     public ulong MessageId { get; set; }
 
     /// <summary>
+    ///     Gets or sets the additional remarks about the suggestion.
+    /// </summary>
+    /// <value>The remarks.</value>
+    public string? Remarks { get; set; }
+
+    /// <summary>
     ///     Gets or sets the ID of the staff member who implemented or rejected the suggestion.
     /// </summary>
     /// <value>The staff member ID.</value>

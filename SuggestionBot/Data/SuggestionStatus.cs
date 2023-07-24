@@ -8,5 +8,6 @@ public enum SuggestionStatus
     Suggested,
     Rejected,
     Implemented,
-    Accepted
+    Accepted,
+    Removed
 }

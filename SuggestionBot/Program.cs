@@ -30,6 +30,7 @@ builder.Services.AddSingleton<ConfigurationService>();
 builder.Services.AddSingleton<CooldownService>();
 builder.Services.AddHostedSingleton<SuggestionService>();
 builder.Services.AddHostedSingleton<UserBlockingService>();
+builder.Services.AddSingleton<MailmanService>();
 builder.Services.AddHostedSingleton<BotService>();
 
 IHost app = builder.Build();

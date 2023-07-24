@@ -16,16 +16,21 @@ internal sealed partial class SuggestionCommand : ApplicationCommandModule
 
     private readonly SuggestionService _suggestionService;
     private readonly UserBlockingService _userBlockingService;
+    private readonly MailmanService _mailmanService;
 
     /// <summary>
     ///     Initializes a new instance of the <see cref="SuggestionCommand" /> class.
     /// </summary>
     /// <param name="suggestionService">The <see cref="SuggestionService" />.</param>
     /// <param name="userBlockingService">The <see cref="UserBlockingService" />.</param>
-    public SuggestionCommand(SuggestionService suggestionService, UserBlockingService userBlockingService)
+    /// <param name="mailmanService">The <see cref="MailmanService" />.</param>
+    public SuggestionCommand(SuggestionService suggestionService,
+        UserBlockingService userBlockingService,
+        MailmanService mailmanService)
     {
         _suggestionService = suggestionService;
         _userBlockingService = userBlockingService;
+        _mailmanService = mailmanService;
     }
 
     private static DiscordEmbed CreateNotFoundEmbed(string query)
