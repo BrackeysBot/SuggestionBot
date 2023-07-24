@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2023-07-24
+
+### Added
+
+- Added optional staff remarks to suggestion embeds.
+- Staff can now remove suggestions.
+
+### Changed
+
+- `/suggestion view` now uses the same search logic as `/suggestion setstatus`.
+- Suggestion updates are now sent to the author. 
+
 ## [1.5.1] - 2023-07-24
 
 ### Added
@@ -92,6 +104,7 @@ implemented, accepted, or rejected.
 
 - Initial release.
 
+[1.6.0]: https://github.com/BrackeysBot/SuggestionBot/releases/tag/v1.6.0
 [1.5.1]: https://github.com/BrackeysBot/SuggestionBot/releases/tag/v1.5.1
 [1.5.0]: https://github.com/BrackeysBot/SuggestionBot/releases/tag/v1.5.0
 [1.4.0]: https://github.com/BrackeysBot/SuggestionBot/releases/tag/v1.4.0
