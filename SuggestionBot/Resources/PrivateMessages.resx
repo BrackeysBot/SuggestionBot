@@ -24,6 +24,24 @@
         </value>
     </resheader>
 
+    <data name="PlannedDescription" xml:space="preserve">
+        <value>{user.Mention}, your suggestion in **{guild.Name}** has been closed by staff because the changes you suggested have already been planned for the server.
+
+If you have any further questions, please reach us by sending a DM to ModMail.</value>
+    </data>
+
+    <data name="AlreadyImplementedDescription" xml:space="preserve">
+        <value>{user.Mention}, your suggestion in **{guild.Name}** has been closed by staff because the changes you suggested are already present in the server.
+
+If you have any further questions, please reach us by sending a DM to ModMail.</value>
+    </data>
+
+    <data name="DuplicateDescription" xml:space="preserve">
+        <value>{user.Mention}, your suggestion in **{guild.Name}** has been closed by staff because it was determined to be a duplicate of an existing suggestion which supersedes it or was previously closed.
+
+If you have any further questions, please reach us by sending a DM to ModMail.</value>
+    </data>
+
     <data name="RemovedDescription" xml:space="preserve">
         <value>{user.Mention}, your suggestion in **{guild.Name}** has been removed by staff because it was inappropriate or violated our server rules.
 Repeated abuse will result in you losing access to the channel.

@@ -647,6 +647,9 @@ internal sealed class SuggestionService : BackgroundService
             SuggestionStatus.Rejected => "❌",
             SuggestionStatus.Implemented => "✅",
             SuggestionStatus.Accepted => "✅",
+            SuggestionStatus.Duplicate => "🔁",
+            SuggestionStatus.AlreadyImplemented => "✅",
+            SuggestionStatus.AlreadyPlanned => "📅",
             _ => throw new ArgumentOutOfRangeException(nameof(suggestion), suggestion.Status, null)
         };
 
@@ -662,8 +665,10 @@ internal sealed class SuggestionService : BackgroundService
         {
             SuggestionStatus.Suggested => configuration.SuggestedColor,
             SuggestionStatus.Rejected => configuration.RejectedColor,
-            SuggestionStatus.Implemented => configuration.ImplementedColor,
+            SuggestionStatus.Implemented or SuggestionStatus.AlreadyImplemented => configuration.ImplementedColor,
             SuggestionStatus.Accepted => configuration.AcceptedColor,
+            SuggestionStatus.Duplicate => configuration.DuplicateColor,
+            SuggestionStatus.AlreadyPlanned => configuration.PlannedColor,
             _ => throw new ArgumentOutOfRangeException(nameof(suggestion), suggestion.Status, null)
         });
 

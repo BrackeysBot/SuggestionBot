@@ -72,6 +72,28 @@ namespace SuggestionBot.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to {user.Mention}, your suggestion in **{guild.Name}** has been closed by staff because the changes you suggested are already present in the server.
+        ///
+        ///If you have any further questions, please reach us by sending a DM to ModMail..
+        /// </summary>
+        internal static string AlreadyImplementedDescription {
+            get {
+                return ResourceManager.GetString("AlreadyImplementedDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {user.Mention}, your suggestion in **{guild.Name}** has been closed by staff because it was determined to be a duplicate of an existing suggestion which supersedes it or was previously closed.
+        ///
+        ///If you have any further questions, please reach us by sending a DM to ModMail..
+        /// </summary>
+        internal static string DuplicateDescription {
+            get {
+                return ResourceManager.GetString("DuplicateDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Hi {user.Mention}. Your suggestion in **{guild.Name}** has been implemented and is now live in the server!
         ///Thank you for your contribution and feedback, and we hope you enjoy the new changes.
         ///
@@ -80,6 +102,17 @@ namespace SuggestionBot.Resources {
         internal static string ImplementedDescription {
             get {
                 return ResourceManager.GetString("ImplementedDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {user.Mention}, your suggestion in **{guild.Name}** has been closed by staff because the changes you suggested have already been planned for the server.
+        ///
+        ///If you have any further questions, please reach us by sending a DM to ModMail..
+        /// </summary>
+        internal static string PlannedDescription {
+            get {
+                return ResourceManager.GetString("PlannedDescription", resourceCulture);
             }
         }
         
