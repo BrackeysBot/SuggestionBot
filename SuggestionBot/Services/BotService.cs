@@ -1,5 +1,7 @@
 ﻿using System.Reflection;
 using DSharpPlus;
+using DSharpPlus.Entities;
+using DSharpPlus.EventArgs;
 using DSharpPlus.SlashCommands;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -66,6 +68,13 @@ internal sealed class BotService : BackgroundService
         slashCommands.RegisterCommands<SuggestCommand>();
         slashCommands.RegisterCommands<SuggestionCommand>();
 
+        _discordClient.Ready += OnReady;
         return _discordClient.ConnectAsync();
+    }
+
+    private Task OnReady(DiscordClient sender, ReadyEventArgs args)
+    {
+        var activity = new DiscordActivity("/suggest to make suggestions", ActivityType.Playing);
+        return _discordClient.UpdateStatusAsync(activity);
     }
 }
