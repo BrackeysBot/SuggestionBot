@@ -40,6 +40,7 @@ internal sealed class InfoCommand : ApplicationCommandModule
         embed.WithTitle($"SuggestionBot v{botVersion}");
         embed.AddField("Ping", client.Ping, true);
         embed.AddField("Uptime", (DateTimeOffset.UtcNow - _botService.StartedAt).Humanize(), true);
+        embed.AddField("View Source", "[View on GitHub](https://github.com/BrackeysBot/SuggestionBot/)", true);
 
         var builder = new StringBuilder();
         builder.AppendLine($"SuggestionBot: {botVersion}");

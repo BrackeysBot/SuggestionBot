@@ -13,6 +13,8 @@ using X10D.DSharpPlus;
 
 namespace SuggestionBot.Services;
 
+using MentionUtility = X10D.DSharpPlus.MentionUtility;
+
 internal sealed class SuggestionService : BackgroundService
 {
     private readonly ConcurrentDictionary<ulong, List<Suggestion>> _suggestions = new();
