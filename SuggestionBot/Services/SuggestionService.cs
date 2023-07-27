@@ -145,6 +145,7 @@ internal sealed class SuggestionService : BackgroundService
 
         var suggestion = new Suggestion
         {
+            Id = GetNextId(guildId),
             AuthorId = member.Id,
             Content = content,
             GuildId = guildId
@@ -205,6 +206,28 @@ internal sealed class SuggestionService : BackgroundService
 
         Suggestion[] userSuggestions = GetSuggestionsBy(member);
         return userSuggestions.Length == 0 ? DateTimeOffset.MinValue : userSuggestions.Max(s => s.Timestamp);
+    }
+
+    /// <summary>
+    ///     Gets the next available suggestion ID for the specified guild.
+    /// </summary>
+    /// <param name="guildId">The ID of the guild.</param>
+    /// <returns>The next available suggestion ID.</returns>
+    public long GetNextId(ulong guildId)
+    {
+        if (!_suggestions.TryGetValue(guildId, out List<Suggestion>? suggestions))
+        {
+            return 1;
+        }
+
+        long nextId = suggestions.Max(s => s.Id) + 1;
+
+        while (TryGetSuggestion(guildId, nextId, out _))
+        {
+            nextId++;
+        }
+
+        return nextId;
     }
 
     /// <summary>
