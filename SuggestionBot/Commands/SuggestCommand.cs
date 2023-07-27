@@ -36,7 +36,8 @@ internal sealed class SuggestCommand : ApplicationCommandModule
     [SlashRequireGuild]
     public async Task SuggestAsync(InteractionContext context)
     {
-        if (_userBlockingService.IsUserBlocked(context.Guild, context.User))
+        DiscordGuild guild = context.Guild;
+        if (_userBlockingService.IsUserBlocked(guild, context.User))
         {
             var builder = new DiscordInteractionResponseBuilder();
             builder.AsEphemeral();
@@ -75,7 +76,8 @@ internal sealed class SuggestCommand : ApplicationCommandModule
             return;
         }
 
-        Suggestion suggestion = _suggestionService.CreateSuggestion(context.Member, input.Value);
+        string content = MentionUtility.ReplaceChannelMentions(guild, input.Value);
+        Suggestion suggestion = _suggestionService.CreateSuggestion(context.Member, content);
         DiscordMessage? message = await _suggestionService.PostSuggestionAsync(suggestion).ConfigureAwait(false);
         if (message == null)
         {
