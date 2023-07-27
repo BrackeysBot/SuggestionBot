@@ -11,7 +11,7 @@ internal sealed class SuggestionConfiguration : IEntityTypeConfiguration<Suggest
     /// <inheritdoc />
     public void Configure(EntityTypeBuilder<Suggestion> builder)
     {
-        builder.HasKey(e => e.Id);
+        builder.HasKey(e => new { e.GuildId, e.Id });
 
         builder.Property(e => e.Id).IsRequired();
         builder.Property(e => e.AuthorId).IsRequired();
