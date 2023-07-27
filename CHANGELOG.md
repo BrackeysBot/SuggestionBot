@@ -123,6 +123,8 @@ implemented, accepted, or rejected.
 
 - Initial release.
 
+[1.6.3]: https://github.com/BrackeysBot/SuggestionBot/releases/tag/v1.6.3
+[1.6.2]: https://github.com/BrackeysBot/SuggestionBot/releases/tag/v1.6.2
 [1.6.1]: https://github.com/BrackeysBot/SuggestionBot/releases/tag/v1.6.1
 [1.6.0]: https://github.com/BrackeysBot/SuggestionBot/releases/tag/v1.6.0
 [1.5.1]: https://github.com/BrackeysBot/SuggestionBot/releases/tag/v1.5.1
