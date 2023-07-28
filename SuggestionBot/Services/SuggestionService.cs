@@ -364,64 +364,6 @@ internal sealed class SuggestionService : BackgroundService
     }
 
     /// <summary>
-    ///     Returns the score for the specified suggestion.
-    /// </summary>
-    /// <param name="suggestion">The suggestion.</param>
-    /// <returns>The score for the suggestion.</returns>
-    /// <exception cref="ArgumentNullException"><paramref name="suggestion" /> is <see langword="null" />.</exception>
-    public int GetScore(Suggestion suggestion)
-    {
-        if (suggestion is null)
-        {
-            throw new ArgumentNullException(nameof(suggestion));
-        }
-
-        return GetVotesUp(suggestion) - GetVotesDown(suggestion);
-    }
-
-    /// <summary>
-    ///     Returns the number of down-votes for the specified suggestion.
-    /// </summary>
-    /// <param name="suggestion">The suggestion.</param>
-    /// <returns>The number of down-votes for the suggestion.</returns>
-    /// <exception cref="ArgumentNullException"><paramref name="suggestion" /> is <see langword="null" />.</exception>
-    public int GetVotesDown(Suggestion suggestion)
-    {
-        if (suggestion is null)
-        {
-            throw new ArgumentNullException(nameof(suggestion));
-        }
-
-        if (GetSuggestionMessage(suggestion) is not { } message)
-        {
-            return 0;
-        }
-
-        return message.Reactions.Count(r => r.Emoji == "👎");
-    }
-
-    /// <summary>
-    ///     Returns the number of up-votes for the specified suggestion.
-    /// </summary>
-    /// <param name="suggestion">The suggestion.</param>
-    /// <returns>The number of up-votes for the suggestion.</returns>
-    /// <exception cref="ArgumentNullException"><paramref name="suggestion" /> is <see langword="null" />.</exception>
-    public int GetVotesUp(Suggestion suggestion)
-    {
-        if (suggestion is null)
-        {
-            throw new ArgumentNullException(nameof(suggestion));
-        }
-
-        if (GetSuggestionMessage(suggestion) is not { } message)
-        {
-            return 0;
-        }
-
-        return message.Reactions.Count(r => r.Emoji == "👍");
-    }
-
-    /// <summary>
     ///     Gets the top-rated suggestions for the specified guild.
     /// </summary>
     /// <param name="guild">The guild.</param>
@@ -444,7 +386,7 @@ internal sealed class SuggestionService : BackgroundService
             _suggestions.TryAdd(guild.Id, suggestions);
         }
 
-        suggestions.Sort((s1, s2) => GetScore(s2).CompareTo(GetScore(s1)));
+        suggestions.Sort((s1, s2) => s2.Score.CompareTo(s1.Score));
         return suggestions.Take(count).ToArray();
     }
 

@@ -23,5 +23,7 @@ internal sealed class SuggestionConfiguration : IEntityTypeConfiguration<Suggest
         builder.Property(e => e.ThreadId);
         builder.Property(e => e.StaffMemberId);
         builder.Property(e => e.Remarks);
+        builder.Property(e => e.UpVotes);
+        builder.Property(e => e.DownVotes);
     }
 }

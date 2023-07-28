@@ -1,4 +1,6 @@
-﻿namespace SuggestionBot.Data;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+namespace SuggestionBot.Data;
 
 /// <summary>
 ///     Represents a suggestion.
@@ -10,6 +12,12 @@ public sealed class Suggestion
     /// </summary>
     /// <value>The author ID.</value>
     public ulong AuthorId { get; set; }
+
+    /// <summary>
+    ///     Gets or sets the number of down-votes the suggestion has.
+    /// </summary>
+    /// <value>The number of down-votes.</value>
+    public int DownVotes { get; set; }
 
     /// <summary>
     ///     Gets or sets the content of the suggestion.
@@ -41,6 +49,13 @@ public sealed class Suggestion
     public string? Remarks { get; set; }
 
     /// <summary>
+    ///     Gets the score of the suggestion.
+    /// </summary>
+    /// <value>The score.</value>
+    [NotMapped]
+    public int Score => UpVotes - DownVotes;
+
+    /// <summary>
     ///     Gets or sets the ID of the staff member who implemented or rejected the suggestion.
     /// </summary>
     /// <value>The staff member ID.</value>
@@ -63,4 +78,10 @@ public sealed class Suggestion
     /// </summary>
     /// <value>The suggestion timestamp.</value>
     public DateTimeOffset Timestamp { get; set; } = DateTimeOffset.UtcNow;
+
+    /// <summary>
+    ///     Gets or sets the number of up-votes the suggestion has.
+    /// </summary>
+    /// <value>The number of up-votes.</value>
+    public int UpVotes { get; set; }
 }

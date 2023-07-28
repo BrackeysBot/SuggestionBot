@@ -34,9 +34,8 @@ internal sealed partial class SuggestionCommand
         foreach (Suggestion suggestion in topSuggestions)
         {
             var messageLink = _suggestionService.GetSuggestionLink(suggestion).ToString();
-            int score = _suggestionService.GetScore(suggestion);
             string author = MentionUtility.MentionUser(suggestion.AuthorId);
-            builder.AppendLine($"• **{suggestion.Id} by {author}** ({score:+#;-#;0}) {messageLink}");
+            builder.AppendLine($"• **{suggestion.Id} by {author}** ({suggestion.Score:+#;-#;0}) {messageLink}");
         }
 
         embed.WithColor(DiscordColor.Blurple);
