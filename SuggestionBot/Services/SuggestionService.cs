@@ -693,11 +693,14 @@ internal sealed class SuggestionService : BackgroundService
         {
             await message.DeleteAllReactionsAsync().ConfigureAwait(false);
 
-            DiscordThreadChannel? thread = GetThread(suggestion);
-            if (thread is not null)
+            if (suggestion.Status != SuggestionStatus.Accepted)
             {
-                await thread.DeleteAsync("Suggestion closed").ConfigureAwait(false);
-                SetThread(suggestion, null);
+                DiscordThreadChannel? thread = GetThread(suggestion);
+                if (thread is not null)
+                {
+                    await thread.DeleteAsync("Suggestion closed").ConfigureAwait(false);
+                    SetThread(suggestion, null);
+                }
             }
         }
     }
