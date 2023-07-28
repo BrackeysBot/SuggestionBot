@@ -717,6 +717,9 @@ internal sealed class SuggestionService : BackgroundService
     protected override Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _discordClient.GuildAvailable += OnGuildAvailable;
+        _discordClient.MessageReactionAdded += OnMessageReactionAdded;
+        _discordClient.MessageReactionRemoved += OnMessageReactionRemoved;
+
         Load();
         return Task.CompletedTask;
     }
@@ -763,6 +766,66 @@ internal sealed class SuggestionService : BackgroundService
         return embed;
     }
 
+    private Task OnMessageReactionRemoved(DiscordClient sender, MessageReactionRemoveEventArgs args)
+    {
+        string emoji = args.Emoji.Name;
+
+        if (!ValidateReaction(args.User as DiscordMember, args.Message, emoji, out Suggestion? suggestion))
+        {
+            return Task.CompletedTask;
+        }
+
+        switch (emoji)
+        {
+            case "👍":
+                suggestion.UpVotes--;
+                break;
+
+            case "👎":
+                suggestion.DownVotes--;
+                break;
+
+            default:
+                return Task.CompletedTask;
+        }
+
+        using SuggestionContext context = _contextFactory.CreateDbContext();
+        context.Suggestions.Update(suggestion);
+        context.SaveChanges();
+
+        return Task.CompletedTask;
+    }
+
+    private Task OnMessageReactionAdded(DiscordClient sender, MessageReactionAddEventArgs args)
+    {
+        string emoji = args.Emoji.Name;
+
+        if (!ValidateReaction(args.User as DiscordMember, args.Message, emoji, out Suggestion? suggestion))
+        {
+            return Task.CompletedTask;
+        }
+
+        switch (emoji)
+        {
+            case "👍":
+                suggestion.UpVotes++;
+                break;
+
+            case "👎":
+                suggestion.DownVotes++;
+                break;
+
+            default:
+                return Task.CompletedTask;
+        }
+
+        using SuggestionContext context = _contextFactory.CreateDbContext();
+        context.Suggestions.Update(suggestion);
+        context.SaveChanges();
+
+        return Task.CompletedTask;
+    }
+
     private Task OnGuildAvailable(DiscordClient sender, GuildCreateEventArgs args)
     {
         DiscordGuild guild = args.Guild;
@@ -785,7 +848,86 @@ internal sealed class SuggestionService : BackgroundService
             _logger.LogWarning("{Guild} is not configured!", guild);
         }
 
+        RefreshSuggestionScores(args.Guild);
         return Task.CompletedTask;
+    }
+
+    private bool ValidateReaction(DiscordMember? member,
+        DiscordMessage message,
+        string emoji,
+        [NotNullWhen(true)] out Suggestion? suggestion)
+    {
+        suggestion = null;
+
+        if (member is null || member.IsBot)
+        {
+            return false;
+        }
+
+        DiscordGuild guild = member.Guild;
+        if (message.Channel.Id != _configurationService.GetGuildConfiguration(guild)?.SuggestionChannel)
+        {
+            return false;
+        }
+
+        if (!_suggestions.TryGetValue(guild.Id, out List<Suggestion>? suggestions))
+        {
+            return false;
+        }
+
+        if (emoji != "👍" && emoji != "👎")
+        {
+            return false;
+        }
+
+        suggestion = suggestions.FirstOrDefault(s => s.MessageId == message.Id);
+        if (suggestion is null)
+        {
+            return false;
+        }
+
+        return suggestion.Status != SuggestionStatus.Suggested;
+    }
+
+    private void RefreshSuggestionScores(DiscordGuild guild)
+    {
+        IEnumerable<Suggestion> suggestions = GetSuggestions(guild).Where(s => s is
+        {
+            Status: SuggestionStatus.Suggested,
+            UpVotes: 0,
+            DownVotes: 0
+        });
+
+        var updatedSuggestions = new List<Suggestion>();
+
+        foreach (Suggestion suggestion in suggestions)
+        {
+            DiscordMessage? message = GetSuggestionMessage(suggestion);
+            if (message is null)
+            {
+                continue;
+            }
+
+            int upVotes = message.Reactions.Count(r => r.Emoji.Name == "👍");
+            int downVotes = message.Reactions.Count(r => r.Emoji.Name == "👎");
+            if (upVotes == suggestion.UpVotes && downVotes == suggestion.DownVotes)
+            {
+                continue;
+            }
+
+            suggestion.UpVotes = upVotes;
+            suggestion.DownVotes = downVotes;
+            updatedSuggestions.Add(suggestion);
+        }
+
+        if (updatedSuggestions.Count == 0)
+        {
+            return;
+        }
+
+        using SuggestionContext context = _contextFactory.CreateDbContext();
+        context.Suggestions.UpdateRange(updatedSuggestions);
+        context.SaveChanges();
     }
 
     private void Load()
