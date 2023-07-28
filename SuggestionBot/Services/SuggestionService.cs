@@ -295,6 +295,41 @@ internal sealed class SuggestionService : BackgroundService
     }
 
     /// <summary>
+    ///     Returns the suggestion message for the specified suggestion.
+    /// </summary>
+    /// <param name="suggestion">The suggestion.</param>
+    /// <returns>The message for the suggestion.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="suggestion" /> is <see langword="null" />.</exception>
+    public DiscordMessage? GetSuggestionMessage(Suggestion suggestion)
+    {
+        if (suggestion is null)
+        {
+            throw new ArgumentNullException(nameof(suggestion));
+        }
+
+        ulong guildId = suggestion.GuildId;
+        ulong messageId = suggestion.MessageId;
+
+        _configurationService.TryGetGuildConfiguration(guildId, out GuildConfiguration? configuration);
+        configuration ??= new GuildConfiguration();
+
+        if (!_discordClient.Guilds.TryGetValue(suggestion.GuildId, out DiscordGuild? guild))
+        {
+            return null;
+        }
+
+        DiscordChannel? channel = guild.GetChannel(configuration.SuggestionChannel);
+        if (channel is null)
+        {
+            return null;
+        }
+
+        // once again, I hate doing GetAwaiter().GetResult(). but this is another sync method that I don't want to make
+        // async purely to make an embed. I'm sorry.
+        return channel.GetMessageAsync(messageId).GetAwaiter().GetResult();
+    }
+
+    /// <summary>
     ///     Gets the discussion thread for the specified suggestion.
     /// </summary>
     /// <param name="suggestion">The suggestion.</param>
@@ -326,6 +361,33 @@ internal sealed class SuggestionService : BackgroundService
         // however, there may be an edge case where the suggestion's thread ID is its own channel,
         // so we shall use that as a last resort.
         return guild.GetChannel(suggestion.ThreadId) as DiscordThreadChannel;
+    }
+
+    /// <summary>
+    ///     Gets the top-rated suggestions for the specified guild.
+    /// </summary>
+    /// <param name="guild">The guild.</param>
+    /// <param name="count">The number of suggestions to return.</param>
+    /// <returns>A read-only view of the top-rated suggestions.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="guild" /> is <see langword="null" />.</exception>
+    public IReadOnlyList<Suggestion> GetTopSuggestions(DiscordGuild guild, int count = 10)
+    {
+        if (guild is null)
+        {
+            throw new ArgumentNullException(nameof(guild));
+        }
+
+        if (!_suggestions.TryGetValue(guild.Id, out List<Suggestion>? suggestions))
+        {
+            using SuggestionContext context = _contextFactory.CreateDbContext();
+            suggestions = context.Suggestions
+                .Where(s => s.GuildId == guild.Id && s.Status == SuggestionStatus.Suggested)
+                .ToList();
+            _suggestions.TryAdd(guild.Id, suggestions);
+        }
+
+        suggestions.Sort((s1, s2) => s2.Score.CompareTo(s1.Score));
+        return suggestions.Take(count).ToArray();
     }
 
     /// <summary>
@@ -508,29 +570,21 @@ internal sealed class SuggestionService : BackgroundService
     /// <param name="suggestion">The suggestion to update.</param>
     /// <param name="thread">The discussion thread.</param>
     /// <returns><see langword="true" /> if the message was updated; otherwise, <see langword="false" />.</returns>
-    /// <exception cref="ArgumentNullException">
-    ///     <para><paramref name="suggestion" /> is <see langword="null" />.</para>
-    ///     -or-
-    ///     <para><paramref name="thread" /> is <see langword="null" />.</para>
-    /// </exception>
-    public bool SetThread(Suggestion suggestion, DiscordThreadChannel thread)
+    /// <exception cref="ArgumentNullException"><paramref name="suggestion" /> is <see langword="null" />.</exception>
+    public bool SetThread(Suggestion suggestion, DiscordThreadChannel? thread)
     {
         if (suggestion is null)
         {
             throw new ArgumentNullException(nameof(suggestion));
         }
 
-        if (thread is null)
-        {
-            throw new ArgumentNullException(nameof(thread));
-        }
-
-        if (suggestion.ThreadId == thread.Id)
+        ulong threadId = thread?.Id ?? 0;
+        if (suggestion.ThreadId == threadId)
         {
             return false;
         }
 
-        suggestion.ThreadId = thread.Id;
+        suggestion.ThreadId = threadId;
         using SuggestionContext context = _contextFactory.CreateDbContext();
         context.Suggestions.Update(suggestion);
         context.SaveChanges();
@@ -642,11 +696,8 @@ internal sealed class SuggestionService : BackgroundService
             DiscordThreadChannel? thread = GetThread(suggestion);
             if (thread is not null)
             {
-                await thread.ModifyAsync(t =>
-                {
-                    t.IsArchived = true;
-                    t.Locked = true;
-                }).ConfigureAwait(false);
+                await thread.DeleteAsync("Suggestion closed").ConfigureAwait(false);
+                SetThread(suggestion, null);
             }
         }
     }
@@ -655,6 +706,9 @@ internal sealed class SuggestionService : BackgroundService
     protected override Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _discordClient.GuildAvailable += OnGuildAvailable;
+        _discordClient.MessageReactionAdded += OnMessageReactionAdded;
+        _discordClient.MessageReactionRemoved += OnMessageReactionRemoved;
+
         Load();
         return Task.CompletedTask;
     }
@@ -701,6 +755,66 @@ internal sealed class SuggestionService : BackgroundService
         return embed;
     }
 
+    private Task OnMessageReactionRemoved(DiscordClient sender, MessageReactionRemoveEventArgs args)
+    {
+        string emoji = args.Emoji.Name;
+
+        if (!ValidateReaction(args.User as DiscordMember, args.Message, emoji, out Suggestion? suggestion))
+        {
+            return Task.CompletedTask;
+        }
+
+        switch (emoji)
+        {
+            case "👍":
+                suggestion.UpVotes--;
+                break;
+
+            case "👎":
+                suggestion.DownVotes--;
+                break;
+
+            default:
+                return Task.CompletedTask;
+        }
+
+        using SuggestionContext context = _contextFactory.CreateDbContext();
+        context.Suggestions.Update(suggestion);
+        context.SaveChanges();
+
+        return Task.CompletedTask;
+    }
+
+    private Task OnMessageReactionAdded(DiscordClient sender, MessageReactionAddEventArgs args)
+    {
+        string emoji = args.Emoji.Name;
+
+        if (!ValidateReaction(args.User as DiscordMember, args.Message, emoji, out Suggestion? suggestion))
+        {
+            return Task.CompletedTask;
+        }
+
+        switch (emoji)
+        {
+            case "👍":
+                suggestion.UpVotes++;
+                break;
+
+            case "👎":
+                suggestion.DownVotes++;
+                break;
+
+            default:
+                return Task.CompletedTask;
+        }
+
+        using SuggestionContext context = _contextFactory.CreateDbContext();
+        context.Suggestions.Update(suggestion);
+        context.SaveChanges();
+
+        return Task.CompletedTask;
+    }
+
     private Task OnGuildAvailable(DiscordClient sender, GuildCreateEventArgs args)
     {
         DiscordGuild guild = args.Guild;
@@ -723,7 +837,86 @@ internal sealed class SuggestionService : BackgroundService
             _logger.LogWarning("{Guild} is not configured!", guild);
         }
 
+        RefreshSuggestionScores(args.Guild);
         return Task.CompletedTask;
+    }
+
+    private bool ValidateReaction(DiscordMember? member,
+        DiscordMessage message,
+        string emoji,
+        [NotNullWhen(true)] out Suggestion? suggestion)
+    {
+        suggestion = null;
+
+        if (member is null || member.IsBot)
+        {
+            return false;
+        }
+
+        DiscordGuild guild = member.Guild;
+        if (message.Channel.Id != _configurationService.GetGuildConfiguration(guild)?.SuggestionChannel)
+        {
+            return false;
+        }
+
+        if (!_suggestions.TryGetValue(guild.Id, out List<Suggestion>? suggestions))
+        {
+            return false;
+        }
+
+        if (emoji != "👍" && emoji != "👎")
+        {
+            return false;
+        }
+
+        suggestion = suggestions.FirstOrDefault(s => s.MessageId == message.Id);
+        if (suggestion is null)
+        {
+            return false;
+        }
+
+        return suggestion.Status != SuggestionStatus.Suggested;
+    }
+
+    private void RefreshSuggestionScores(DiscordGuild guild)
+    {
+        IEnumerable<Suggestion> suggestions = GetSuggestions(guild).Where(s => s is
+        {
+            Status: SuggestionStatus.Suggested,
+            UpVotes: 0,
+            DownVotes: 0
+        });
+
+        var updatedSuggestions = new List<Suggestion>();
+
+        foreach (Suggestion suggestion in suggestions)
+        {
+            DiscordMessage? message = GetSuggestionMessage(suggestion);
+            if (message is null)
+            {
+                continue;
+            }
+
+            int upVotes = message.Reactions.Count(r => r.Emoji.Name == "👍");
+            int downVotes = message.Reactions.Count(r => r.Emoji.Name == "👎");
+            if (upVotes == suggestion.UpVotes && downVotes == suggestion.DownVotes)
+            {
+                continue;
+            }
+
+            suggestion.UpVotes = upVotes;
+            suggestion.DownVotes = downVotes;
+            updatedSuggestions.Add(suggestion);
+        }
+
+        if (updatedSuggestions.Count == 0)
+        {
+            return;
+        }
+
+        using SuggestionContext context = _contextFactory.CreateDbContext();
+        context.Suggestions.UpdateRange(updatedSuggestions);
+        context.SaveChanges();
     }
 
     private void Load()

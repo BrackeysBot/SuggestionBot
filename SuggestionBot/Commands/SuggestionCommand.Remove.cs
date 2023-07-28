@@ -2,7 +2,6 @@
 using DSharpPlus.SlashCommands;
 using SuggestionBot.AutocompleteProviders;
 using SuggestionBot.Data;
-using X10D.DSharpPlus;
 
 namespace SuggestionBot.Commands;
 
