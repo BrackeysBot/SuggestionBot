@@ -570,29 +570,21 @@ internal sealed class SuggestionService : BackgroundService
     /// <param name="suggestion">The suggestion to update.</param>
     /// <param name="thread">The discussion thread.</param>
     /// <returns><see langword="true" /> if the message was updated; otherwise, <see langword="false" />.</returns>
-    /// <exception cref="ArgumentNullException">
-    ///     <para><paramref name="suggestion" /> is <see langword="null" />.</para>
-    ///     -or-
-    ///     <para><paramref name="thread" /> is <see langword="null" />.</para>
-    /// </exception>
-    public bool SetThread(Suggestion suggestion, DiscordThreadChannel thread)
+    /// <exception cref="ArgumentNullException"><paramref name="suggestion" /> is <see langword="null" />.</exception>
+    public bool SetThread(Suggestion suggestion, DiscordThreadChannel? thread)
     {
         if (suggestion is null)
         {
             throw new ArgumentNullException(nameof(suggestion));
         }
 
-        if (thread is null)
-        {
-            throw new ArgumentNullException(nameof(thread));
-        }
-
-        if (suggestion.ThreadId == thread.Id)
+        ulong threadId = thread?.Id ?? 0;
+        if (suggestion.ThreadId == threadId)
         {
             return false;
         }
 
-        suggestion.ThreadId = thread.Id;
+        suggestion.ThreadId = threadId;
         using SuggestionContext context = _contextFactory.CreateDbContext();
         context.Suggestions.Update(suggestion);
         context.SaveChanges();
@@ -704,11 +696,8 @@ internal sealed class SuggestionService : BackgroundService
             DiscordThreadChannel? thread = GetThread(suggestion);
             if (thread is not null)
             {
-                await thread.ModifyAsync(t =>
-                {
-                    t.IsArchived = true;
-                    t.Locked = true;
-                }).ConfigureAwait(false);
+                await thread.DeleteAsync("Suggestion closed").ConfigureAwait(false);
+                SetThread(suggestion, null);
             }
         }
     }
