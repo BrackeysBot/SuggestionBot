@@ -295,6 +295,41 @@ internal sealed class SuggestionService : BackgroundService
     }
 
     /// <summary>
+    ///     Returns the suggestion message for the specified suggestion.
+    /// </summary>
+    /// <param name="suggestion">The suggestion.</param>
+    /// <returns>The message for the suggestion.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="suggestion" /> is <see langword="null" />.</exception>
+    public DiscordMessage? GetSuggestionMessage(Suggestion suggestion)
+    {
+        if (suggestion is null)
+        {
+            throw new ArgumentNullException(nameof(suggestion));
+        }
+
+        ulong guildId = suggestion.GuildId;
+        ulong messageId = suggestion.MessageId;
+
+        _configurationService.TryGetGuildConfiguration(guildId, out GuildConfiguration? configuration);
+        configuration ??= new GuildConfiguration();
+
+        if (!_discordClient.Guilds.TryGetValue(suggestion.GuildId, out DiscordGuild? guild))
+        {
+            return null;
+        }
+
+        DiscordChannel? channel = guild.GetChannel(configuration.SuggestionChannel);
+        if (channel is null)
+        {
+            return null;
+        }
+
+        // once again, I hate doing GetAwaiter().GetResult(). but this is another sync method that I don't want to make
+        // async purely to make an embed. I'm sorry.
+        return channel.GetMessageAsync(messageId).GetAwaiter().GetResult();
+    }
+
+    /// <summary>
     ///     Gets the discussion thread for the specified suggestion.
     /// </summary>
     /// <param name="suggestion">The suggestion.</param>
@@ -326,6 +361,91 @@ internal sealed class SuggestionService : BackgroundService
         // however, there may be an edge case where the suggestion's thread ID is its own channel,
         // so we shall use that as a last resort.
         return guild.GetChannel(suggestion.ThreadId) as DiscordThreadChannel;
+    }
+
+    /// <summary>
+    ///     Returns the score for the specified suggestion.
+    /// </summary>
+    /// <param name="suggestion">The suggestion.</param>
+    /// <returns>The score for the suggestion.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="suggestion" /> is <see langword="null" />.</exception>
+    public int GetScore(Suggestion suggestion)
+    {
+        if (suggestion is null)
+        {
+            throw new ArgumentNullException(nameof(suggestion));
+        }
+
+        return GetVotesUp(suggestion) - GetVotesDown(suggestion);
+    }
+
+    /// <summary>
+    ///     Returns the number of down-votes for the specified suggestion.
+    /// </summary>
+    /// <param name="suggestion">The suggestion.</param>
+    /// <returns>The number of down-votes for the suggestion.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="suggestion" /> is <see langword="null" />.</exception>
+    public int GetVotesDown(Suggestion suggestion)
+    {
+        if (suggestion is null)
+        {
+            throw new ArgumentNullException(nameof(suggestion));
+        }
+
+        if (GetSuggestionMessage(suggestion) is not { } message)
+        {
+            return 0;
+        }
+
+        return message.Reactions.Count(r => r.Emoji == "👎");
+    }
+
+    /// <summary>
+    ///     Returns the number of up-votes for the specified suggestion.
+    /// </summary>
+    /// <param name="suggestion">The suggestion.</param>
+    /// <returns>The number of up-votes for the suggestion.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="suggestion" /> is <see langword="null" />.</exception>
+    public int GetVotesUp(Suggestion suggestion)
+    {
+        if (suggestion is null)
+        {
+            throw new ArgumentNullException(nameof(suggestion));
+        }
+
+        if (GetSuggestionMessage(suggestion) is not { } message)
+        {
+            return 0;
+        }
+
+        return message.Reactions.Count(r => r.Emoji == "👍");
+    }
+
+    /// <summary>
+    ///     Gets the top-rated suggestions for the specified guild.
+    /// </summary>
+    /// <param name="guild">The guild.</param>
+    /// <param name="count">The number of suggestions to return.</param>
+    /// <returns>A read-only view of the top-rated suggestions.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="guild" /> is <see langword="null" />.</exception>
+    public IReadOnlyList<Suggestion> GetTopSuggestions(DiscordGuild guild, int count = 10)
+    {
+        if (guild is null)
+        {
+            throw new ArgumentNullException(nameof(guild));
+        }
+
+        if (!_suggestions.TryGetValue(guild.Id, out List<Suggestion>? suggestions))
+        {
+            using SuggestionContext context = _contextFactory.CreateDbContext();
+            suggestions = context.Suggestions
+                .Where(s => s.GuildId == guild.Id && s.Status == SuggestionStatus.Suggested)
+                .ToList();
+            _suggestions.TryAdd(guild.Id, suggestions);
+        }
+
+        suggestions.Sort((s1, s2) => GetScore(s2).CompareTo(GetScore(s1)));
+        return suggestions.Take(count).ToArray();
     }
 
     /// <summary>
