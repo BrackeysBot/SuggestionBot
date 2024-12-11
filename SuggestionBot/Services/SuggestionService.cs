@@ -9,11 +9,9 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using SuggestionBot.Configuration;
 using SuggestionBot.Data;
-using X10D.DSharpPlus;
+using SuggestionBot.Extensions;
 
 namespace SuggestionBot.Services;
-
-using MentionUtility = X10D.DSharpPlus.MentionUtility;
 
 internal sealed class SuggestionService : BackgroundService
 {

@@ -4,8 +4,8 @@ using Humanizer;
 using SmartFormat;
 using SuggestionBot.Configuration;
 using SuggestionBot.Data;
+using SuggestionBot.Extensions;
 using SuggestionBot.Resources;
-using X10D.DSharpPlus;
 
 namespace SuggestionBot.Services;
 

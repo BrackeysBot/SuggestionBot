@@ -5,8 +5,6 @@ using static SuggestionBot.Data.SuggestionStatus;
 
 namespace SuggestionBot.Commands;
 
-using MentionUtility = X10D.DSharpPlus.MentionUtility;
-
 internal sealed partial class SuggestionCommand
 {
     [SlashCommand("stats", "View suggestion statistics.", false)]

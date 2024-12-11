@@ -1,4 +1,4 @@
-using DSharpPlus;
+﻿using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 
@@ -66,15 +66,28 @@ public sealed class DiscordModal
         }
     }
 
-    private Task OnModalSubmitted(DiscordClient sender, ModalSubmitEventArgs e)
+    private async Task OnModalSubmitted(DiscordClient sender, ModalSubmitEventArgs e)
     {
         if (e.Interaction.Data.CustomId != _customId)
-            return Task.CompletedTask;
+            return;
 
         _discordClient.ModalSubmitted -= OnModalSubmitted;
 
-        IEnumerable<DiscordComponent> components = e.Interaction.Data.Components.SelectMany(c => c.Components);
-        IEnumerable<TextInputComponent> inputComponents = components.OfType<TextInputComponent>();
+        var inputComponents = new List<TextInputComponent>();
+
+        foreach (var component in e.Interaction.Data.Components)
+        {
+            switch (component)
+            {
+                case DiscordActionRowComponent rowComponent:
+                    inputComponents.AddRange(rowComponent.Components.OfType<TextInputComponent>());
+                    break;
+                case TextInputComponent textInputComponent:
+                    inputComponents.Add(textInputComponent);
+                    break;
+            }
+        }
+
         foreach (TextInputComponent inputComponent in inputComponents)
         {
             if (_inputs.TryGetValue(inputComponent.CustomId, out DiscordModalTextInput? input))
@@ -82,6 +95,6 @@ public sealed class DiscordModal
         }
 
         _taskCompletionSource.TrySetResult();
-        return e.Interaction.CreateResponseAsync(InteractionResponseType.DeferredMessageUpdate);
+        await e.Interaction.CreateResponseAsync(InteractionResponseType.DeferredMessageUpdate);
     }
 }

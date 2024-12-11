@@ -4,8 +4,8 @@ using DSharpPlus.Entities;
 using DSharpPlus.SlashCommands;
 using DSharpPlus.SlashCommands.Attributes;
 using Humanizer;
+using SuggestionBot.Extensions;
 using SuggestionBot.Services;
-using X10D.DSharpPlus;
 
 namespace SuggestionBot.Commands;
 

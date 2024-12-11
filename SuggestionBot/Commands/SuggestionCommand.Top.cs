@@ -5,8 +5,6 @@ using SuggestionBot.Data;
 
 namespace SuggestionBot.Commands;
 
-using MentionUtility = X10D.DSharpPlus.MentionUtility;
-
 internal sealed partial class SuggestionCommand
 {
     [SlashCommand("top", "Views the top rated suggestions.", false)]

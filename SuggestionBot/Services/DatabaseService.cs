@@ -38,8 +38,5 @@ internal sealed class DatabaseService : BackgroundService
 
         _logger.LogInformation("Creating database");
         await context.Database.EnsureCreatedAsync().ConfigureAwait(false);
-
-        _logger.LogInformation("Applying migrations");
-        await context.Database.MigrateAsync().ConfigureAwait(false);
     }
 }

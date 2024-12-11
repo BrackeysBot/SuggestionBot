@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using SuggestionBot.Data;
-using X10D.DSharpPlus;
+using SuggestionBot.Extensions;
 
 namespace SuggestionBot.Services;
 
@@ -69,7 +69,7 @@ internal sealed class UserBlockingService : BackgroundService
 
         context.SaveChanges();
 
-        _logger.LogInformation("{StaffMember} blocked user {user} in {Guild}. Reason: {Reason}", staffMember, user,
+        _logger.LogInformation("{StaffMember} blocked user {User} in {Guild}. Reason: {Reason}", staffMember, user,
             guild, reason ?? "None");
 
         var embed = new DiscordEmbedBuilder();

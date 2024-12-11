@@ -2,8 +2,8 @@
 using DSharpPlus.SlashCommands;
 using Microsoft.Extensions.DependencyInjection;
 using SuggestionBot.Data;
+using SuggestionBot.Extensions;
 using SuggestionBot.Services;
-using X10D.DSharpPlus;
 
 namespace SuggestionBot.AutocompleteProviders;
 
