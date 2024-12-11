@@ -12,6 +12,7 @@ internal sealed class BlockedUserConfiguration : IEntityTypeConfiguration<Blocke
     /// <inheritdoc />
     public void Configure(EntityTypeBuilder<BlockedUser> builder)
     {
+        builder.ToTable("BlockedUsers");
         builder.HasKey(e => new { e.GuildId, e.UserId });
 
         builder.Property(e => e.GuildId).IsRequired();

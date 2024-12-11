@@ -3,7 +3,7 @@ using DSharpPlus.SlashCommands;
 using Humanizer;
 using SuggestionBot.AutocompleteProviders;
 using SuggestionBot.Data;
-using X10D.DSharpPlus;
+using SuggestionBot.Extensions;
 
 namespace SuggestionBot.Commands;
 

@@ -50,7 +50,7 @@ internal sealed class ConfigurationService
     /// </returns>
     public GuildConfiguration? GetGuildConfiguration(ulong guildId)
     {
-        return _configuration.GetSection(guildId.ToString())?.Get<GuildConfiguration>();
+        return _configuration.GetSection(guildId.ToString()).Get<GuildConfiguration>();
     }
 
     /// <summary>
