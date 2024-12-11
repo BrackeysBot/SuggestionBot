@@ -1,4 +1,4 @@
-﻿using DSharpPlus;
+using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 
@@ -82,6 +82,6 @@ public sealed class DiscordModal
         }
 
         _taskCompletionSource.TrySetResult();
-        return e.Interaction.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource);
+        return e.Interaction.CreateResponseAsync(InteractionResponseType.DeferredMessageUpdate);
     }
 }
